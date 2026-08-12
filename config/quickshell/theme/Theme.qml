@@ -2,9 +2,19 @@ pragma Singleton
 
 import QtQuick
 import "../settings"
+import "../services"
 
 QtObject {
     readonly property bool light: ShellSettings.appearanceMode === "light"
+        || (ShellSettings.appearanceMode === "automatic"
+            && PaletteService.recommendedAppearance === "light")
+
+    function palette(name, darkFallback, lightFallback) {
+        const fallback = light ? lightFallback : darkFallback;
+        return PaletteService.active
+            ? PaletteService.modeColor(name, light ? "light" : "dark", fallback)
+            : fallback;
+    }
 
     function alpha(color, opacity) {
         return Qt.rgba(color.r, color.g, color.b, opacity);
@@ -19,23 +29,21 @@ QtObject {
         );
     }
 
-    // Temporary semantic seed. Wallpaper-derived roles will replace the seed;
-    // components must continue to consume roles rather than literal colors.
-    readonly property color accent: light ? "#405F91" : "#A9C7FF"
-    readonly property color onAccent: light ? "#FFFFFF" : "#0A305F"
-    readonly property color accentSoft: light ? "#D7E3FF" : "#264776"
-    readonly property color onAccentSoft: light ? "#244777" : "#D7E3FF"
-    readonly property color background: light ? "#F8F9FF" : "#0A101A"
-    readonly property color surfaceBase: light ? "#F5F7FF" : "#151D2A"
-    readonly property color surfaceRaisedBase: light ? "#EEF2FC" : "#202A39"
-    readonly property color surfaceHighestBase: light ? "#E7ECF7" : "#2A3546"
-    readonly property color onSurface: light ? "#171C24" : "#E9EEF8"
-    readonly property color onSurfaceMuted: light ? "#454B55" : "#B7C1D0"
-    readonly property color outline: light ? "#727985" : "#8490A1"
-    readonly property color outlineSoft: light ? "#C2C7D0" : "#3D4858"
+    readonly property color accent: palette("primary", "#A9C7FF", "#405F91")
+    readonly property color onAccent: palette("on_primary", "#0A305F", "#FFFFFF")
+    readonly property color accentSoft: palette("primary_container", "#264776", "#D7E3FF")
+    readonly property color onAccentSoft: palette("on_primary_container", "#D7E3FF", "#244777")
+    readonly property color background: palette("background", "#0A101A", "#F8F9FF")
+    readonly property color surfaceBase: palette("surface", "#151D2A", "#F5F7FF")
+    readonly property color surfaceRaisedBase: palette("surface_container", "#202A39", "#EEF2FC")
+    readonly property color surfaceHighestBase: palette("surface_container_high", "#2A3546", "#E7ECF7")
+    readonly property color onSurface: palette("on_surface", "#E9EEF8", "#171C24")
+    readonly property color onSurfaceMuted: palette("on_surface_variant", "#B7C1D0", "#454B55")
+    readonly property color outline: palette("outline", "#8490A1", "#727985")
+    readonly property color outlineSoft: palette("outline_variant", "#3D4858", "#C2C7D0")
     readonly property color success: light ? "#2D6A46" : "#88D6A7"
     readonly property color warning: light ? "#795A00" : "#F1CB72"
-    readonly property color danger: light ? "#BA1A1A" : "#FFB4AB"
+    readonly property color danger: palette("error", "#FFB4AB", "#BA1A1A")
 
     readonly property color glass: alpha(
         mix(surfaceBase, accent, ShellSettings.surfaceTint),

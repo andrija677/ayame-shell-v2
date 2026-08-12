@@ -3,10 +3,15 @@ import QtQuick.Layouts
 import Quickshell
 import "../../components"
 import "../../settings"
+import "../../services"
 import "../../theme"
 
 FloatingWindow {
     id: root
+
+    property bool livelyMotion: true
+    property bool wifiDemoEnabled: true
+    property bool bluetoothDemoEnabled: false
 
     title: "Ayame Shell V2 — Design Preview"
     implicitWidth: 820
@@ -60,10 +65,17 @@ FloatingWindow {
                 }
 
                 ActionPill {
-                    label: ShellSettings.appearanceMode === "dark" ? "Light" : "Dark"
-                    symbol: ShellSettings.appearanceMode === "dark" ? "☀" : "☾"
-                    onActivated: ShellSettings.appearanceMode =
-                        ShellSettings.appearanceMode === "dark" ? "light" : "dark"
+                    label: ShellSettings.appearanceMode === "automatic"
+                        ? "Auto " + (Theme.light ? "light" : "dark")
+                        : ShellSettings.appearanceMode[0].toUpperCase()
+                            + ShellSettings.appearanceMode.slice(1)
+                    symbol: ShellSettings.appearanceMode === "automatic" ? "◐"
+                        : Theme.light ? "☀" : "☾"
+                    onActivated: {
+                        const modes = ["automatic", "light", "dark"];
+                        const index = modes.indexOf(ShellSettings.appearanceMode);
+                        ShellSettings.appearanceMode = modes[(index + 1) % modes.length];
+                    }
                 }
             }
 
@@ -91,7 +103,9 @@ FloatingWindow {
                         }
                         AppText {
                             Layout.fillWidth: true
-                            text: "Depth, tint, contrast, and motion are system roles—not colors copied into components."
+                            text: PaletteService.active
+                                ? "Live colors from your current wallpaper flow through every semantic role."
+                                : "Depth, tint, contrast, and motion are system roles—not colors copied into components."
                             color: Theme.onSurfaceMuted
                             wrapMode: Text.WordWrap
                         }
@@ -114,8 +128,16 @@ FloatingWindow {
                         Item { Layout.fillHeight: true }
                         RowLayout {
                             spacing: Theme.space8
-                            ActionPill { label: "Quiet" }
-                            ActionPill { label: "Alive"; primary: true }
+                            ActionPill {
+                                label: "Quiet"
+                                checked: !root.livelyMotion
+                                onActivated: root.livelyMotion = false
+                            }
+                            ActionPill {
+                                label: "Alive"
+                                checked: root.livelyMotion
+                                onActivated: root.livelyMotion = true
+                            }
                         }
                     }
                 }
@@ -141,8 +163,18 @@ FloatingWindow {
                         }
                         RowLayout {
                             spacing: Theme.space8
-                            ActionPill { label: "Wi-Fi"; symbol: "◉"; primary: true }
-                            ActionPill { label: "Bluetooth"; symbol: "B" }
+                            ActionPill {
+                                label: "Wi-Fi"
+                                symbol: "◉"
+                                checked: root.wifiDemoEnabled
+                                onActivated: root.wifiDemoEnabled = !root.wifiDemoEnabled
+                            }
+                            ActionPill {
+                                label: "Bluetooth"
+                                symbol: "B"
+                                checked: root.bluetoothDemoEnabled
+                                onActivated: root.bluetoothDemoEnabled = !root.bluetoothDemoEnabled
+                            }
                         }
                         Item { Layout.fillHeight: true }
                         GlassSurface {
@@ -170,7 +202,13 @@ FloatingWindow {
                                     spacing: 1
                                     AppText { text: "V2 runtime isolated"; font.weight: Font.Bold }
                                     AppText {
-                                        text: Quickshell.dataDir
+                                        text: PaletteService.generating
+                                            ? "Generating wallpaper palette…"
+                                            : PaletteService.error.length > 0
+                                                ? PaletteService.error
+                                                : PaletteService.active
+                                                    ? "Wallpaper palette active"
+                                                    : Quickshell.dataDir
                                         color: Theme.onAccentSoft
                                         font.pixelSize: Theme.fontSmall
                                         elide: Text.ElideMiddle

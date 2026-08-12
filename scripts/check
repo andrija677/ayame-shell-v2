@@ -6,3 +6,6 @@ project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 bash -n "$project_dir/scripts/ayame-v2-preview" "$project_dir/scripts/check"
 qmllint -I "$project_dir/config/quickshell" \
     $(find "$project_dir/config/quickshell" -type f -name '*.qml' -print)
+QT_QPA_PLATFORM=offscreen qmltestrunner \
+    -input "$project_dir/tests" \
+    -import "$project_dir/config/quickshell"

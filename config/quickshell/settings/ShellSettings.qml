@@ -8,6 +8,9 @@ QtObject {
     id: root
 
     property alias appearanceMode: values.appearanceMode
+    property alias dynamicColorsEnabled: values.dynamicColorsEnabled
+    property alias dynamicColorStyle: values.dynamicColorStyle
+    property alias wallpaperPath: values.wallpaperPath
     property alias glassOpacity: values.glassOpacity
     property alias glassBlur: values.glassBlur
     property alias surfaceTint: values.surfaceTint
@@ -36,7 +39,10 @@ QtObject {
 
         JsonAdapter {
             id: values
-            property string appearanceMode: "dark"
+            property string appearanceMode: "automatic"
+            property bool dynamicColorsEnabled: true
+            property string dynamicColorStyle: "tonal"
+            property string wallpaperPath: ""
             property real glassOpacity: 0.72
             property bool glassBlur: true
             property real surfaceTint: 0.18
