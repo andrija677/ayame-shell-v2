@@ -1,8 +1,8 @@
 //@ pragma UseQApplication
 
 import Quickshell
-import "modules/preview"
+import "modules/prototype"
 
 ShellRoot {
-    DesignPreview {}
+    PrototypeDesktop {}
 }

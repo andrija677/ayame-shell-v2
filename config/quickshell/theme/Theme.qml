@@ -33,6 +33,10 @@ QtObject {
     readonly property color onAccent: palette("on_primary", "#0A305F", "#FFFFFF")
     readonly property color accentSoft: palette("primary_container", "#264776", "#D7E3FF")
     readonly property color onAccentSoft: palette("on_primary_container", "#D7E3FF", "#244777")
+    readonly property color secondary: palette("secondary", "#BBC7DB", "#536175")
+    readonly property color secondarySoft: palette("secondary_container", "#3C485B", "#D7E3F8")
+    readonly property color tertiary: palette("tertiary", "#D7BDE4", "#6C5675")
+    readonly property color tertiarySoft: palette("tertiary_container", "#533E5C", "#F5D9FF")
     readonly property color background: palette("background", "#0A101A", "#F8F9FF")
     readonly property color surfaceBase: palette("surface", "#151D2A", "#F5F7FF")
     readonly property color surfaceRaisedBase: palette("surface_container", "#202A39", "#EEF2FC")
@@ -65,6 +69,7 @@ QtObject {
     readonly property int space20: 20
     readonly property int space24: 24
     readonly property int space32: 32
+    readonly property int space40: 40
 
     readonly property int radiusSmall: Math.round(10 * ShellSettings.cornerScale)
     readonly property int radiusMedium: Math.round(16 * ShellSettings.cornerScale)
@@ -79,6 +84,7 @@ QtObject {
     readonly property int fontLabel: 12
     readonly property int fontTitle: 18
     readonly property int fontDisplay: 28
+    readonly property int fontHero: 42
 
     function duration(value) {
         return ShellSettings.motionEnabled

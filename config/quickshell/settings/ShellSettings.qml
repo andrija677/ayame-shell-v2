@@ -17,6 +17,12 @@ QtObject {
     property alias motionEnabled: values.motionEnabled
     property alias motionScale: values.motionScale
     property alias cornerScale: values.cornerScale
+    property alias dockAutoHide: values.dockAutoHide
+    property alias aiEnabled: values.aiEnabled
+    property alias aiProvider: values.aiProvider
+    property alias aiModel: values.aiModel
+    property alias aiBaseUrl: values.aiBaseUrl
+    property alias aiPersonality: values.aiPersonality
     property alias previewVisible: values.previewVisible
 
     function save() {
@@ -49,6 +55,12 @@ QtObject {
             property bool motionEnabled: true
             property real motionScale: 1.0
             property real cornerScale: 1.0
+            property bool dockAutoHide: true
+            property bool aiEnabled: true
+            property string aiProvider: "gemini"
+            property string aiModel: "gemini-2.5-flash"
+            property string aiBaseUrl: ""
+            property string aiPersonality: "cat"
             property bool previewVisible: true
         }
     }

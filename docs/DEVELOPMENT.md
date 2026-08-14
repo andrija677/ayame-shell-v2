@@ -6,6 +6,11 @@ Run the isolated design preview without stopping Ayame Shell V1:
 ./scripts/ayame-v2-preview
 ```
 
+On Hyprland, the helper floats, sizes, and centers the prototype after its
+window appears. The compositor layout returns to its previous shape immediately,
+so opening the laboratory cannot permanently displace the terminal or other
+development windows.
+
 Validate the shell and helper scripts:
 
 ```sh

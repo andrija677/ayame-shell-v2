@@ -2,4 +2,36 @@
 set -euo pipefail
 
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-exec qs --path "$project_dir/config/quickshell" "$@"
+preview_title="Ayame Shell V2 — Interactive Prototype"
+
+float_preview() {
+    command -v hyprctl >/dev/null 2>&1 || return 0
+    command -v jq >/dev/null 2>&1 || return 0
+
+    local address=""
+    local attempt
+    for attempt in $(seq 1 40); do
+        address="$(hyprctl -j clients 2>/dev/null \
+            | jq -r --arg title "$preview_title" \
+                '.[] | select(.title == $title) | .address' \
+            | head -n 1)"
+        [[ -n "$address" ]] && break
+        sleep 0.05
+    done
+
+    [[ -n "$address" ]] || return 0
+    hyprctl dispatch \
+        "hl.dsp.window.float({ action = \"set\", window = \"address:$address\" })" \
+        >/dev/null 2>&1 || true
+    hyprctl dispatch \
+        "hl.dsp.window.resize({ x = 1180, y = 760, window = \"address:$address\" })" \
+        >/dev/null 2>&1 || true
+    hyprctl dispatch \
+        "hl.dsp.window.center({ window = \"address:$address\" })" \
+        >/dev/null 2>&1 || true
+}
+
+qs --path "$project_dir/config/quickshell" "$@" &
+preview_pid=$!
+float_preview
+wait "$preview_pid"
