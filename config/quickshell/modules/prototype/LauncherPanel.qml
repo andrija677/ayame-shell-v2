@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import Quickshell.Widgets
 import "../../components"
 import "../../theme"
@@ -9,8 +10,14 @@ GlassSurface {
     id: root
 
     property string query: ""
+    property bool pickerOpen: false
+    property string addAppStatus: ""
+    property var newlyAddedApps: []
+    property var removedAppIds: []
+    property var pendingRemoval: null
     signal appRequested(var entry)
     signal closeRequested()
+    signal powerRequested()
 
     radius: Theme.radiusXLarge
     depth: 2
@@ -18,7 +25,11 @@ GlassSurface {
     readonly property var apps: {
         DesktopEntries.applications.values;
         const needle = query.trim().toLowerCase();
-        const entries = DesktopEntries.applications.values.filter(entry => {
+        const desktopApps = DesktopEntries.applications.values.filter(entry =>
+            root.removedAppIds.indexOf(entry.id) < 0);
+        const pendingApps = root.newlyAddedApps.filter(added =>
+            !desktopApps.some(entry => (entry.execString || "").includes(added.path)));
+        const entries = desktopApps.concat(pendingApps).filter(entry => {
             if (entry.noDisplay) return false;
             if (!needle) return true;
             const keywords = entry.keywords ? entry.keywords.join(" ") : "";
@@ -27,6 +38,36 @@ GlassSurface {
         });
         entries.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         return entries.slice(0, 9);
+    }
+
+    function isAyameApp(entry) {
+        return entry && (entry.ayameExecutable
+            || (entry.id || "").startsWith("ayame-app-"));
+    }
+
+    function executablePath(entry) {
+        if (entry.path)
+            return entry.path;
+        if (entry.command && entry.command.length > 0)
+            return entry.command[0];
+        const raw = entry.execString || "";
+        const quoted = raw.match(/^\"([^\"]+)\"/);
+        return quoted ? quoted[1] : raw.split(" ")[0];
+    }
+
+    function removeApp(entry) {
+        if (!isAyameApp(entry) || removeProcess.running)
+            return;
+        const path = executablePath(entry);
+        if (!path) {
+            addAppStatus = "Could not locate that app";
+            statusTimer.restart();
+            return;
+        }
+        pendingRemoval = { id: entry.id, path: path, name: entry.name };
+        removeProcess.command = ["bash", Quickshell.shellDir
+            + "/../../scripts/ayame-add-app", "--remove", path];
+        removeProcess.running = true;
     }
 
     ColumnLayout {
@@ -185,7 +226,13 @@ GlassSurface {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: root.appRequested(appTile.modelData)
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onClicked: mouse => {
+                            if (mouse.button === Qt.RightButton)
+                                root.removeApp(appTile.modelData);
+                            else
+                                root.appRequested(appTile.modelData);
+                        }
                     }
                     Behavior on color { ColorAnimation { duration: Theme.motionQuick } }
                     Behavior on scale { NumberAnimation { duration: Theme.motionQuick } }
@@ -198,16 +245,74 @@ GlassSurface {
         RowLayout {
             Layout.fillWidth: true
             spacing: Theme.space8
-            ActionPill { label: "Add an app"; symbol: "+"; enabled: false }
+            ActionPill {
+                label: "Add an app"
+                symbol: "+"
+                onActivated: {
+                    root.pickerOpen = true;
+                    executablePicker.open();
+                }
+            }
             AppText {
                 Layout.fillWidth: true
-                text: "Executable picker arrives with launcher integration"
+                text: root.addAppStatus.length > 0 ? root.addAppStatus
+                    : "Right-click Ayame-added apps to remove them"
                 color: Theme.outline
                 font.pixelSize: Theme.fontSmall
             }
-            ActionPill { label: "Power"; symbol: "⏻"; enabled: false }
+            ActionPill { label: "Power"; symbol: "⏻"; onActivated: root.powerRequested() }
         }
     }
+
+    ExecutablePicker {
+        id: executablePicker
+        anchors.fill: parent
+        z: 20
+        visible: root.pickerOpen
+        enabled: visible
+        opacity: visible ? 1 : 0
+        onCloseRequested: {
+            root.pickerOpen = false;
+            Qt.callLater(() => searchInput.forceActiveFocus());
+        }
+        onAppAdded: (name, path) => {
+            const id = "ayame-added:" + path;
+            const remaining = root.newlyAddedApps.filter(app => app.path !== path);
+            root.newlyAddedApps = remaining.concat([{
+                id: id,
+                name: name,
+                genericName: "Added by Ayame",
+                keywords: [],
+                icon: "application-x-executable",
+                noDisplay: false,
+                execString: path,
+                path: path,
+                ayameExecutable: true
+            }]);
+            root.addAppStatus = name + " added";
+            statusTimer.restart();
+        }
+        Behavior on opacity { NumberAnimation { duration: Theme.motionQuick } }
+    }
+
+    Process { id: addedAppProcess }
+    Process {
+        id: removeProcess
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0 && root.pendingRemoval) {
+                root.removedAppIds = root.removedAppIds.concat([root.pendingRemoval.id]);
+                root.newlyAddedApps = root.newlyAddedApps.filter(app =>
+                    app.path !== root.pendingRemoval.path);
+                root.addAppStatus = root.pendingRemoval.name + " removed";
+            } else {
+                root.addAppStatus = "Could not remove that app";
+            }
+            root.pendingRemoval = null;
+            statusTimer.restart();
+        }
+    }
+
+    Timer { id: statusTimer; interval: 3200; onTriggered: root.addAppStatus = "" }
 
     Component.onCompleted: searchInput.forceActiveFocus()
 }

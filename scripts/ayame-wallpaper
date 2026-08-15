@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/ayame-shell-v2"
+wallpaper_file="$state_dir/wallpaper.path"
+mkdir -p "$state_dir"
+
+case "${1:-}" in
+    set)
+        wallpaper="${2:-}"
+        [[ -f "$wallpaper" ]] || { printf 'Wallpaper does not exist: %s\n' "$wallpaper" >&2; exit 1; }
+        wallpaper="$(readlink -f -- "$wallpaper")"
+        [[ "$wallpaper" != *$'\n'* ]] || exit 2
+        printf '%s\n' "$wallpaper" > "$wallpaper_file.tmp"
+        mv -f -- "$wallpaper_file.tmp" "$wallpaper_file"
+        if hyprctl hyprpaper wallpaper ", $wallpaper, cover" >/dev/null 2>&1; then
+            :
+        elif command -v swww >/dev/null 2>&1; then
+            swww img "$wallpaper" --transition-type grow --transition-duration 0.7
+        else
+            printf 'Neither Hyprpaper IPC nor swww could set the wallpaper\n' >&2
+            exit 1
+        fi
+        ;;
+    *) printf 'Usage: %s set PATH\n' "$0" >&2; exit 2 ;;
+esac

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mode="${1:-area}"
+delay="${2:-0}"
+monitor="${3:-}"
+directory="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
+mkdir -p "$directory"
+output="$directory/screenshot_$(date +%Y-%m-%d_%H-%M-%S).png"
+
+if [[ "$delay" =~ ^[0-9]+$ ]] && (( delay > 0 )); then
+    sleep "$delay"
+fi
+
+case "$mode" in
+    desktop) grim "$output" ;;
+    monitor)
+        if [[ -z "$monitor" || "$monitor" == "AUTO" ]]; then
+            monitor="$(hyprctl monitors 2>/dev/null | awk '
+                /^Monitor / { current=$2 }
+                /^[[:space:]]*focused: yes/ { print current; exit }
+            ')"
+        fi
+        [[ -n "$monitor" ]] || { printf 'No focused monitor found\n' >&2; exit 2; }
+        grim -o "$monitor" "$output"
+        ;;
+    geometry)
+        geometry="$monitor"
+        [[ "$geometry" =~ ^-?[0-9]+,-?[0-9]+[[:space:]][0-9]+x[0-9]+$ ]] \
+            || { printf 'Invalid screenshot geometry: %s\n' "$geometry" >&2; exit 2; }
+        sleep 0.20
+        grim -g "$geometry" "$output"
+        ;;
+    area)
+        geometry="$(slurp -d -b '#00000099' -c '#a9c7ffff' -s '#405f9166' -w 3)"
+        [[ -n "$geometry" ]] || exit 1
+        sleep 0.20
+        grim -g "$geometry" "$output"
+        ;;
+    *) printf 'Unknown capture mode: %s\n' "$mode" >&2; exit 2 ;;
+esac
+
+command -v wl-copy >/dev/null 2>&1 && wl-copy --type image/png < "$output" || true
+command -v notify-send >/dev/null 2>&1 \
+    && notify-send -a "Ayame Screenshot" "Screenshot saved" "$output" 2>/dev/null || true
+printf '%s\n' "$output"

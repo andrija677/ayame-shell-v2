@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+unit="ayame-shell-v2.service"
+v1_unit="ayame-shell.service"
+
+restore_v1() {
+    systemctl --user stop "$unit" >/dev/null 2>&1 || true
+    systemctl --user start "$v1_unit"
+    printf 'Ayame V2 stopped; Ayame V1 restored.\n'
+}
+
+case "${1:-status}" in
+    start)
+        "$project_dir/scripts/check"
+        systemctl --user stop "$v1_unit"
+        if ! systemd-run --user --unit="$unit" --collect \
+                --property=Restart=on-failure --property=RestartSec=2 \
+                "$project_dir/scripts/ayame-v2-runtime" >/dev/null; then
+            restore_v1
+            exit 1
+        fi
+        sleep 3
+        if ! systemctl --user is-active --quiet "$unit"; then
+            printf 'Ayame V2 did not stay running; rolling back.\n' >&2
+            restore_v1
+            exit 1
+        fi
+        printf 'Ayame V2 is live. Run `%s stop` to return to V1.\n' "$0"
+        ;;
+    stop|rollback)
+        restore_v1
+        ;;
+    restart)
+        "$0" stop
+        "$0" start
+        ;;
+    status)
+        printf 'V2: '
+        systemctl --user is-active "$unit" 2>/dev/null || true
+        printf 'V1: '
+        systemctl --user is-active "$v1_unit" 2>/dev/null || true
+        ;;
+    logs)
+        journalctl --user -u "$unit" -n 120 --no-pager
+        ;;
+    *)
+        printf 'Usage: %s {start|stop|rollback|restart|status|logs}\n' "$0" >&2
+        exit 2
+        ;;
+esac

@@ -11,6 +11,7 @@ import json
 import shutil
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -30,6 +31,82 @@ def secret(provider: str) -> str:
         text=True,
     )
     return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def start_secret_service() -> bool:
+    for command in (["ksecretd"], ["gnome-keyring-daemon", "--start", "--components=secrets"]):
+        try:
+            subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, start_new_session=True)
+            time.sleep(0.8)
+            return True
+        except FileNotFoundError:
+            continue
+    return False
+
+
+def secret_action(arguments: list[str], input_text: str | None = None) -> subprocess.CompletedProcess:
+    result = subprocess.run(["secret-tool", *arguments], input=input_text, check=False,
+                            capture_output=True, text=True)
+    if result.returncode and "not activatable" in result.stderr.lower() and start_secret_service():
+        result = subprocess.run(["secret-tool", *arguments], input=input_text, check=False,
+                                capture_output=True, text=True)
+    return result
+
+
+def store_secret(provider: str, value: str) -> int:
+    if not value:
+        return 2
+    if not shutil.which("secret-tool"):
+        print("Install libsecret to store API keys securely", file=sys.stderr)
+        return 127
+    result = secret_action(["store", "--label", f"Ayame AI ({provider})",
+                            "service", "ayame-shell-ai", "provider", provider], value)
+    if result.returncode:
+        print(result.stderr.strip() or "No Secret Service keyring is available", file=sys.stderr)
+    return result.returncode
+
+
+def delete_secret(provider: str) -> int:
+    if not shutil.which("secret-tool"):
+        print("secret-tool is not installed", file=sys.stderr)
+        return 127
+    result = secret_action(["clear", "service", "ayame-shell-ai", "provider", provider])
+    if result.returncode:
+        print(result.stderr.strip(), file=sys.stderr)
+    return result.returncode
+
+
+def provider_test(config: dict) -> int:
+    provider = str(config.get("provider") or "gemini")
+    model = str(config.get("model") or "").strip()
+    if not model:
+        raise RuntimeError("Choose a model before testing")
+    if provider == "gemini":
+        key = secret("gemini")
+        if not key:
+            raise RuntimeError("Add a Gemini API key before testing")
+        url = ("https://generativelanguage.googleapis.com/v1beta/models/"
+               + urllib.parse.quote(model, safe="") + "?key=" + urllib.parse.quote(key, safe=""))
+        request_object = urllib.request.Request(url, method="GET")
+    elif provider == "openai":
+        key = secret("openai")
+        if not key:
+            raise RuntimeError("Add an OpenAI-compatible API key before testing")
+        base = str(config.get("baseUrl") or "https://api.openai.com").rstrip("/")
+        request_object = urllib.request.Request(base + "/v1/models/" + urllib.parse.quote(model, safe=""),
+                                               headers={"Authorization": f"Bearer {key}"}, method="GET")
+    elif provider == "ollama":
+        base = str(config.get("baseUrl") or "http://127.0.0.1:11434").rstrip("/")
+        data = json.dumps({"model": model}).encode()
+        request_object = urllib.request.Request(base + "/api/show", data=data,
+                                               headers={"Content-Type": "application/json"}, method="POST")
+    else:
+        raise RuntimeError("Unsupported AI provider")
+    with urllib.request.urlopen(request_object, timeout=15) as response:
+        response.read(1024)
+    print(f"Connected • {model} is available")
+    return 0
 
 
 def request(url: str, headers: dict[str, str], body: dict) -> urllib.response.addinfourl:
@@ -53,7 +130,7 @@ def clean_history(items: list[dict]) -> list[dict[str, str]]:
 def stream_openai(config: dict, messages: list[dict[str, str]]) -> None:
     key = secret("openai")
     if not key:
-        raise RuntimeError("Add an OpenAI-compatible API key in Ayame V1 Settings")
+        raise RuntimeError("Add an OpenAI-compatible API key in Ayame V2 Settings")
     base = str(config.get("baseUrl") or "https://api.openai.com").rstrip("/")
     body = {
         "model": config.get("model") or "gpt-4.1-mini",
@@ -78,7 +155,7 @@ def stream_openai(config: dict, messages: list[dict[str, str]]) -> None:
 def stream_gemini(config: dict, messages: list[dict[str, str]]) -> None:
     key = secret("gemini")
     if not key:
-        raise RuntimeError("Add a Gemini API key in Ayame V1 Settings")
+        raise RuntimeError("Add a Gemini API key in Ayame V2 Settings")
     model = urllib.parse.quote(str(config.get("model") or "gemini-2.5-flash"), safe="")
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -157,9 +234,25 @@ def chat() -> int:
 
 
 def main() -> int:
-    if len(sys.argv) == 2 and sys.argv[1] == "chat":
+    action = sys.argv[1] if len(sys.argv) > 1 else ""
+    provider = sys.argv[2] if len(sys.argv) > 2 else ""
+    if action == "chat":
         return chat()
-    print("Usage: ayame-ai.py chat", file=sys.stderr)
+    if action == "key-store":
+        return store_secret(provider, sys.stdin.readline().strip())
+    if action == "key-delete":
+        return delete_secret(provider)
+    if action == "key-status":
+        print("1" if secret(provider) else "0")
+        return 0
+    if action == "test":
+        try:
+            return provider_test(json.loads(sys.stdin.readline()))
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError,
+                KeyError, ValueError, RuntimeError) as error:
+            print(str(error), file=sys.stderr)
+            return 1
+    print("Usage: ayame-ai.py {chat|test|key-store|key-delete|key-status} [provider]", file=sys.stderr)
     return 2
 
 

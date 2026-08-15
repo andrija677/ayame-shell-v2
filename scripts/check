@@ -3,10 +3,23 @@ set -euo pipefail
 
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
-bash -n "$project_dir/scripts/ayame-v2-preview" "$project_dir/scripts/check"
+bash -n "$project_dir/scripts/ayame-v2-preview" "$project_dir/scripts/check" \
+    "$project_dir/scripts/ayame-v2-runtime" "$project_dir/scripts/ayame-v2-session" \
+    "$project_dir/scripts/ayame-add-app" "$project_dir/scripts/ayame-screenshot" \
+    "$project_dir/scripts/ayame-v2-controls" "$project_dir/scripts/ayame-wallpaper" \
+    "$project_dir/scripts/ayame-record" "$project_dir/scripts/ayame-doctor" \
+    "$project_dir/scripts/ayame-clipboard" "$project_dir/scripts/ayame-gaming-mode" \
+    "$project_dir/scripts/ayame-appearance-mode"
 python3 -m py_compile "$project_dir/scripts/ayame-ai.py"
 qmllint -I "$project_dir/config/quickshell" \
     $(find "$project_dir/config/quickshell" -type f -name '*.qml' -print)
 QT_QPA_PLATFORM=offscreen qmltestrunner \
     -input "$project_dir/tests" \
     -import "$project_dir/config/quickshell"
+
+if rg -n 'enabled:\s*false|key:\s*"demo"' \
+        "$project_dir/config/quickshell/modules/prototype" \
+        "$project_dir/config/quickshell/modules/runtime"; then
+    printf 'Found a disabled or demo-only control in an interactive surface.\n' >&2
+    exit 1
+fi

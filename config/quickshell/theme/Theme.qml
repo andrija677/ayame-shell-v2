@@ -51,13 +51,13 @@ QtObject {
 
     readonly property color glass: alpha(
         mix(surfaceBase, accent, ShellSettings.surfaceTint),
-        ShellSettings.glassOpacity)
+        ShellSettings.glassBlur ? ShellSettings.glassOpacity : 0.98)
     readonly property color glassRaised: alpha(
         mix(surfaceRaisedBase, accent, ShellSettings.surfaceTint * 0.8),
-        Math.min(0.96, ShellSettings.glassOpacity + 0.08))
+        ShellSettings.glassBlur ? Math.min(0.96, ShellSettings.glassOpacity + 0.08) : 1)
     readonly property color glassHighest: alpha(
         mix(surfaceHighestBase, accent, ShellSettings.surfaceTint * 0.65),
-        Math.min(0.98, ShellSettings.glassOpacity + 0.14))
+        ShellSettings.glassBlur ? Math.min(0.98, ShellSettings.glassOpacity + 0.14) : 1)
     readonly property color glassStroke: alpha(outlineSoft, light ? 0.72 : 0.62)
     readonly property color glassHighlight: alpha(light ? "#FFFFFF" : "#DCE8FF",
         light ? 0.56 : 0.12)
@@ -88,7 +88,8 @@ QtObject {
 
     function duration(value) {
         return ShellSettings.motionEnabled
-            ? Math.round(value * ShellSettings.motionScale) : 0;
+            ? Math.round(value * ShellSettings.motionScale
+                * (ShellSettings.reducedMotion ? 0.35 : 1)) : 0;
     }
 
     readonly property int motionQuick: duration(110)

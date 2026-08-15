@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Widgets
 import "../../components"
 import "../../settings"
 import "../../theme"
@@ -10,8 +12,10 @@ GlassSurface {
     property string activeOverlay: ""
     property int launchedIndex: -1
     property int hoverIndex: -99
+    property var apps: []
     signal overlayRequested(string name)
     signal appRequested(int index)
+    signal appSecondaryRequested(int index)
 
     function playReveal() { revealed(); }
     signal revealed()
@@ -43,12 +47,7 @@ GlassSurface {
         }
 
         Repeater {
-            model: [
-                { icon: "folder", label: "Files", tone: "secondary" },
-                { icon: "terminal", label: "Terminal", tone: "neutral" },
-                { icon: "language", label: "Browser", tone: "tertiary" },
-                { icon: "chat_bubble", label: "Messages", tone: "primary" }
-            ]
+            model: root.apps
 
             Item {
                 id: appItem
@@ -71,12 +70,18 @@ GlassSurface {
                         : modelData.tone === "tertiary" ? Theme.tertiarySoft
                         : Theme.glassHighest
 
-                    AppIcon {
+                    IconImage {
+                        id: appImage
                         anchors.fill: parent
-                        icon: modelData.icon
-                        iconColor: modelData.tone === "primary" ? Theme.onAccentSoft
-                            : Theme.onSurface
-                        iconSize: 23
+                        anchors.margins: 9
+                        source: Quickshell.iconPath(modelData.icon || "", true)
+                        asynchronous: true
+                    }
+                    AppText {
+                        anchors.centerIn: parent
+                        visible: appImage.source.toString().length === 0
+                        text: (modelData.label || "?").slice(0, 1).toUpperCase()
+                        font.weight: Font.ExtraBold
                     }
 
                     Behavior on width {
@@ -89,11 +94,11 @@ GlassSurface {
                         bottom: parent.bottom
                         horizontalCenter: parent.horizontalCenter
                     }
-                    width: root.launchedIndex === index ? 16 : 4
+                    width: root.launchedIndex === index || modelData.running ? 16 : 4
                     height: 3
                     radius: 2
                     color: Theme.accent
-                    opacity: root.launchedIndex === index || index === 1 ? 1 : 0
+                    opacity: root.launchedIndex === index || modelData.running ? 1 : 0
                     Behavior on width { NumberAnimation { duration: Theme.motionResponsive } }
                 }
 
@@ -101,14 +106,19 @@ GlassSurface {
                     id: appPointer
                     anchors.fill: parent
                     hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
                     cursorShape: Qt.PointingHandCursor
                     onEntered: root.hoverIndex = appItem.index
                     onExited: {
                         if (root.hoverIndex === appItem.index) root.hoverIndex = -99;
                     }
-                    onClicked: {
-                        launchBounce.restart();
-                        root.appRequested(appItem.index);
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.RightButton) {
+                            root.appSecondaryRequested(appItem.index);
+                        } else {
+                            launchBounce.restart();
+                            root.appRequested(appItem.index);
+                        }
                     }
                 }
 

@@ -1,0 +1,103 @@
+import QtQuick
+import Quickshell
+import Quickshell.Io
+import Quickshell.Wayland
+import "../prototype"
+import "../../theme"
+
+PanelWindow {
+    id: root
+
+    required property var controller
+    readonly property bool open: controller.activeOverlay.length > 0
+        && controller.activeOverlay !== "settings"
+
+    anchors { top: true; bottom: true; left: true; right: true }
+    exclusiveZone: 0
+    color: "transparent"
+    visible: open
+    WlrLayershell.namespace: "ayame-shell-v2-overlay"
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: visible
+        ? WlrLayershell.OnDemand : WlrLayershell.None
+
+    Rectangle {
+        anchors.fill: parent
+        color: Theme.alpha(Theme.background, Theme.light ? 0.20 : 0.40)
+        MouseArea { anchors.fill: parent; onClicked: root.controller.closeOverlay() }
+    }
+
+    LauncherPanel {
+        id: launcher
+        anchors { left: parent.left; bottom: parent.bottom; margins: Theme.space16; bottomMargin: 112 }
+        width: Math.min(610, parent.width * 0.58)
+        height: Math.min(650, parent.height - 210)
+        enabled: root.controller.activeOverlay === "launcher"
+        opacity: enabled ? 1 : 0
+        scale: enabled ? 1 : 0.94
+        transformOrigin: Item.BottomLeft
+        onCloseRequested: root.controller.closeOverlay()
+        onAppRequested: entry => {
+            if (!entry) return;
+            if (entry.ayameExecutable) {
+                executableProcess.command = [entry.path];
+                executableProcess.running = true;
+            } else entry.execute();
+            root.controller.closeOverlay();
+        }
+        onPowerRequested: root.controller.activeOverlay = "power"
+        Behavior on opacity { NumberAnimation { duration: Theme.motionResponsive } }
+        Behavior on scale { NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeEnter } }
+    }
+
+    HubPanel {
+        hostWindow: root
+        anchors { right: parent.right; top: parent.top; bottom: parent.bottom; margins: Theme.space16; topMargin: 88; bottomMargin: 112 }
+        width: Math.min(460, parent.width * 0.44)
+        enabled: root.controller.activeOverlay === "hub"
+        opacity: enabled ? 1 : 0
+        scale: enabled ? 1 : 0.94
+        transformOrigin: Item.TopRight
+        onCloseRequested: root.controller.closeOverlay()
+        onSettingsRequested: root.controller.activeOverlay = "settings"
+        onPowerRequested: root.controller.activeOverlay = "power"
+        Behavior on opacity { NumberAnimation { duration: Theme.motionResponsive } }
+        Behavior on scale { NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeEnter } }
+    }
+
+    AiPanel {
+        anchors { right: parent.right; top: parent.top; bottom: parent.bottom; margins: Theme.space16; topMargin: 88; bottomMargin: 112 }
+        width: Math.min(500, parent.width * 0.48)
+        enabled: root.controller.activeOverlay === "ai"
+        opacity: enabled ? 1 : 0
+        scale: enabled ? 1 : 0.94
+        transformOrigin: Item.BottomRight
+        onCloseRequested: root.controller.closeOverlay()
+        onSettingsRequested: root.controller.activeOverlay = "settings"
+        Behavior on opacity { NumberAnimation { duration: Theme.motionResponsive } }
+        Behavior on scale { NumberAnimation { duration: Theme.motionExpressive; easing.type: Theme.easeEnter } }
+    }
+
+    PowerPanel {
+        anchors.centerIn: parent
+        width: Math.min(620, parent.width - Theme.space40 * 2)
+        height: Math.min(500, parent.height - 160)
+        enabled: root.controller.activeOverlay === "power"
+        opacity: enabled ? 1 : 0
+        scale: enabled ? 1 : 0.92
+        onCloseRequested: root.controller.closeOverlay()
+        Behavior on opacity { NumberAnimation { duration: Theme.motionResponsive } }
+        Behavior on scale { NumberAnimation { duration: Theme.motionExpressive; easing.type: Theme.easeEnter } }
+    }
+
+    Process { id: executableProcess }
+
+    Shortcut {
+        sequence: "Escape"
+        onActivated: {
+            if (root.controller.activeOverlay === "launcher" && launcher.pickerOpen)
+                launcher.pickerOpen = false;
+            else root.controller.closeOverlay();
+        }
+    }
+}

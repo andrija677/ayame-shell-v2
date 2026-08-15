@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+export AYAME_V2_RUNTIME=1
+export AYAME_V2_NOTIFICATION_SERVER=1
+exec qs --path "$project_dir/config/quickshell" "$@"

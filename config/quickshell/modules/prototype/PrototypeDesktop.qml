@@ -14,6 +14,19 @@ FloatingWindow {
     property int activeWorkspace: 3
     property int launchedApp: -1
     property string toastMessage: ""
+    readonly property var dockApps: {
+        DesktopEntries.applications.values;
+        const candidates = ["org.gnome.Nautilus", "kitty", "firefox", "discord"];
+        const result = [];
+        for (const candidate of candidates) {
+            const entry = DesktopEntries.heuristicLookup(candidate);
+            if (entry && !result.some(item => item.id === entry.id))
+                result.push({ id: entry.id, entry: entry, label: entry.name,
+                    icon: entry.icon, tone: result.length % 3 === 0 ? "secondary"
+                        : result.length % 3 === 1 ? "neutral" : "tertiary" });
+        }
+        return result;
+    }
     readonly property bool dockRevealed: !ShellSettings.dockAutoHide
         || dockWakeArea.containsMouse || activeOverlay.length > 0
 
@@ -75,8 +88,10 @@ FloatingWindow {
         PrototypeBar {
             id: bar
             anchors { left: parent.left; right: parent.right; top: parent.top; margins: Theme.space16 }
+            hostWindow: root
             activeOverlay: root.activeOverlay
             activeWorkspace: root.activeWorkspace
+            activeWindowTitle: "Ayame V2 — interactive preview"
             onOverlayRequested: name => root.toggleOverlay(name)
             onWorkspaceRequested: workspace => {
                 root.activeWorkspace = workspace;
@@ -104,10 +119,14 @@ FloatingWindow {
                 y: root.dockRevealed ? 14 : dockHost.height - 8
                 activeOverlay: root.activeOverlay
                 launchedIndex: root.launchedApp
+                apps: root.dockApps
                 onOverlayRequested: name => root.toggleOverlay(name)
                 onAppRequested: index => {
                     root.launchedApp = index;
-                    root.showToast(["Files", "Kitty", "Firefox", "Discord"][index] + " ready");
+                    const app = root.dockApps[index];
+                    if (!app || !app.entry) return;
+                    app.entry.execute();
+                    root.showToast(app.label + " launched");
                 }
 
                 Behavior on y {
@@ -122,6 +141,7 @@ FloatingWindow {
         }
 
         LauncherPanel {
+            id: launcherPanel
             anchors { left: parent.left; top: bar.bottom; bottom: parent.bottom; margins: Theme.space16; bottomMargin: 98 }
             width: Math.min(610, parent.width * 0.58)
             enabled: root.activeOverlay === "launcher"
@@ -135,15 +155,22 @@ FloatingWindow {
             onCloseRequested: root.activeOverlay = ""
             onAppRequested: entry => {
                 if (!entry) return;
-                entry.execute();
+                if (entry.ayameExecutable) {
+                    addedAppProcess.command = [entry.path];
+                    addedAppProcess.running = true;
+                } else {
+                    entry.execute();
+                }
                 root.activeOverlay = "";
                 root.showToast((entry.name || "Application") + " launched");
             }
+            onPowerRequested: root.activeOverlay = "power"
             Behavior on opacity { NumberAnimation { duration: Theme.motionResponsive } }
             Behavior on scale { NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeEnter } }
         }
 
         HubPanel {
+            hostWindow: root
             anchors { right: parent.right; top: bar.bottom; bottom: parent.bottom; margins: Theme.space16; bottomMargin: 98 }
             width: Math.min(460, parent.width * 0.44)
             enabled: root.activeOverlay === "hub"
@@ -156,6 +183,7 @@ FloatingWindow {
             }
             onCloseRequested: root.activeOverlay = ""
             onSettingsRequested: root.activeOverlay = "settings"
+            onPowerRequested: root.activeOverlay = "power"
             Behavior on opacity { NumberAnimation { duration: Theme.motionResponsive } }
             Behavior on scale { NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeEnter } }
         }
@@ -193,6 +221,22 @@ FloatingWindow {
             Behavior on scale { NumberAnimation { duration: Theme.motionExpressive; easing.type: Theme.easeEnter } }
         }
 
+        PowerPanel {
+            anchors.centerIn: parent
+            width: Math.min(620, parent.width - Theme.space40 * 2)
+            height: Math.min(500, parent.height - 150)
+            enabled: root.activeOverlay === "power"
+            opacity: enabled ? 1 : 0
+            scale: enabled ? 1 : 0.90
+            transform: Translate {
+                y: root.activeOverlay === "power" ? 0 : 28
+                Behavior on y { NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeExit } }
+            }
+            onCloseRequested: root.activeOverlay = ""
+            Behavior on opacity { NumberAnimation { duration: Theme.motionResponsive } }
+            Behavior on scale { NumberAnimation { duration: Theme.motionExpressive; easing.type: Theme.easeEnter } }
+        }
+
         GlassSurface {
             anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 96 }
             width: toastText.implicitWidth + Theme.space32
@@ -221,10 +265,20 @@ FloatingWindow {
         onTriggered: root.toastMessage = ""
     }
 
+    Process { id: addedAppProcess }
+
     onDockRevealedChanged: {
         if (dockRevealed) dock.playReveal();
     }
 
-    Shortcut { sequence: "Escape"; onActivated: root.activeOverlay = "" }
+    Shortcut {
+        sequence: "Escape"
+        onActivated: {
+            if (root.activeOverlay === "launcher" && launcherPanel.pickerOpen)
+                launcherPanel.pickerOpen = false;
+            else
+                root.activeOverlay = "";
+        }
+    }
     Shortcut { sequence: "Ctrl+Space"; onActivated: root.toggleOverlay("launcher") }
 }
