@@ -6,6 +6,7 @@ unit="ayame-shell-v2.service"
 v1_unit="ayame-shell.service"
 
 restore_v1() {
+    "$project_dir/scripts/ayame-v2-keybinds" disable
     systemctl --user stop "$unit" >/dev/null 2>&1 || true
     systemctl --user start "$v1_unit"
     printf 'Ayame V2 stopped; Ayame V1 restored.\n'
@@ -24,6 +25,11 @@ case "${1:-status}" in
         sleep 3
         if ! systemctl --user is-active --quiet "$unit"; then
             printf 'Ayame V2 did not stay running; rolling back.\n' >&2
+            restore_v1
+            exit 1
+        fi
+        if ! "$project_dir/scripts/ayame-v2-keybinds" enable; then
+            printf 'Ayame V2 keybind registration failed; rolling back.\n' >&2
             restore_v1
             exit 1
         fi

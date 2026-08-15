@@ -1,5 +1,6 @@
 singleton PaletteService 1.0 PaletteService.qml
 singleton AppearanceService 1.0 AppearanceService.qml
+singleton EventStore 1.0 EventStore.qml
 singleton ControlService 1.0 ControlService.qml
 singleton NotificationService 1.0 NotificationService.qml
 singleton WallpaperService 1.0 WallpaperService.qml

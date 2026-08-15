@@ -25,10 +25,11 @@ PanelWindow {
     }
 
     anchors { top: true; right: true }
-    margins { top: 82; right: 16 }
+    margins { top: 76; right: 16 }
     implicitWidth: 380
     implicitHeight: Math.max(1, popupColumn.implicitHeight)
     exclusiveZone: 0
+    exclusionMode: ExclusionMode.Ignore
     color: "transparent"
     visible: popups.length > 0
     WlrLayershell.namespace: "ayame-shell-v2-notification-popups"

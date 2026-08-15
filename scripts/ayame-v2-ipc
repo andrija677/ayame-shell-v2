@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+action="${1:-}"
+
+case "$action" in
+    launcher|dashboard|hub|ai|settings|capture|close)
+        exec qs --path "$project_dir/config/quickshell" \
+            ipc call ayame-v2 "$action"
+        ;;
+    *)
+        printf 'Usage: %s {launcher|dashboard|hub|ai|settings|capture|close}\n' "$0" >&2
+        exit 2
+        ;;
+esac

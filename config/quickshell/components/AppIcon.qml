@@ -15,11 +15,13 @@ Rectangle {
     color: backgroundColor
 
     Text {
-        anchors.centerIn: parent
+        anchors.fill: parent
         text: root.icon
         color: root.iconColor
         font.family: "Material Icons Round"
         font.pixelSize: root.iconSize
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
         renderType: Text.NativeRendering
     }
 }

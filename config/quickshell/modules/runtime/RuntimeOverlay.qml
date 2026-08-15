@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import "../prototype"
+import "../dashboard"
 import "../../theme"
 
 PanelWindow {
@@ -13,7 +14,8 @@ PanelWindow {
         && controller.activeOverlay !== "settings"
 
     anchors { top: true; bottom: true; left: true; right: true }
-    exclusiveZone: 0
+    exclusiveZone: -1
+    exclusionMode: ExclusionMode.Ignore
     color: "transparent"
     visible: open
     WlrLayershell.namespace: "ayame-shell-v2-overlay"
@@ -29,13 +31,13 @@ PanelWindow {
 
     LauncherPanel {
         id: launcher
-        anchors { left: parent.left; bottom: parent.bottom; margins: Theme.space16; bottomMargin: 112 }
+        anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 112 }
         width: Math.min(610, parent.width * 0.58)
         height: Math.min(650, parent.height - 210)
         enabled: root.controller.activeOverlay === "launcher"
         opacity: enabled ? 1 : 0
         scale: enabled ? 1 : 0.94
-        transformOrigin: Item.BottomLeft
+        transformOrigin: Item.Bottom
         onCloseRequested: root.controller.closeOverlay()
         onAppRequested: entry => {
             if (!entry) return;
@@ -48,6 +50,40 @@ PanelWindow {
         onPowerRequested: root.controller.activeOverlay = "power"
         Behavior on opacity { NumberAnimation { duration: Theme.motionResponsive } }
         Behavior on scale { NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeEnter } }
+    }
+
+    DashboardPanel {
+        anchors {
+            horizontalCenter: parent.horizontalCenter
+            top: parent.top
+            bottom: parent.bottom
+            topMargin: 88
+            bottomMargin: 112
+        }
+        width: Math.min(470, parent.width - Theme.space40 * 2)
+        enabled: root.controller.activeOverlay === "dashboard"
+        opacity: enabled ? 1 : 0
+        scale: enabled ? 1 : 0.94
+        transformOrigin: Item.Top
+        transform: Translate {
+            y: root.controller.activeOverlay === "dashboard" ? 0 : -24
+            Behavior on y {
+                NumberAnimation {
+                    duration: Theme.motionResponsive
+                    easing.type: Theme.easeExit
+                }
+            }
+        }
+        onCloseRequested: root.controller.closeOverlay()
+        Behavior on opacity {
+            NumberAnimation { duration: Theme.motionResponsive }
+        }
+        Behavior on scale {
+            NumberAnimation {
+                duration: Theme.motionResponsive
+                easing.type: Theme.easeEnter
+            }
+        }
     }
 
     HubPanel {

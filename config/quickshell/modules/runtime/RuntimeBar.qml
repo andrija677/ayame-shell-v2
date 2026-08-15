@@ -30,4 +30,5 @@ PanelWindow {
         onWorkspaceRequested: workspace => Hyprland.dispatch(
             "hl.dsp.focus({ workspace = " + workspace + " })")
     }
+
 }

@@ -10,21 +10,28 @@ Scope {
         id: controller
         property string activeOverlay: ""
         property var activeScreen: null
+        property int areaCaptureSerial: 0
 
         function toggleOverlay(name, screen) {
             activeScreen = screen;
             activeOverlay = activeOverlay === name ? "" : name;
         }
         function closeOverlay() { activeOverlay = ""; }
+        function requestAreaCapture() {
+            closeOverlay();
+            areaCaptureSerial++;
+        }
     }
 
     IpcHandler {
         target: "ayame-v2"
         function launcher(): void { controller.activeOverlay = "launcher"; }
+        function dashboard(): void { controller.activeOverlay = "dashboard"; }
         function hub(): void { controller.activeOverlay = "hub"; }
         function ai(): void { controller.activeOverlay = "ai"; }
         function settings(): void { controller.activeOverlay = "settings"; }
         function close(): void { controller.closeOverlay(); }
+        function capture(): void { controller.requestAreaCapture(); }
     }
 
     Variants {
@@ -66,6 +73,7 @@ Scope {
             RuntimeCapturePill {
                 required property var modelData
                 screen: modelData
+                controller: root.shellController
             }
         }
     }

@@ -60,6 +60,14 @@ QtObject {
     signal popupRequested(var notification)
     signal popupsCleared()
 
+    function displayBody(notification) {
+        const appName = notification.appName ?? "";
+        const summary = notification.summary ?? "";
+        if (appName === "Ayame Screenshot" || summary === "Screenshot saved")
+            return "Copied to clipboard";
+        return notification.body ?? "";
+    }
+
     function popupSnapshot(notification) {
         const actions = [];
         for (const action of notification.actions ?? []) {
@@ -78,7 +86,7 @@ QtObject {
             "appIcon": notification.appIcon ?? "",
             "summary": notification.summary ?? "",
             "appName": notification.appName ?? "",
-            "body": notification.body ?? "",
+            "body": displayBody(notification),
             "expireTimeout": notification.expireTimeout ?? 6000,
             "actions": actions
         };
@@ -95,7 +103,7 @@ QtObject {
             "desktopEntry": notification.desktopEntry ?? "",
             "summary": notification.summary ?? "",
             "appName": notification.appName ?? "",
-            "body": notification.body ?? "",
+            "body": displayBody(notification),
             "receivedAt": new Date().toISOString()
         });
         historyAdapter.entries = updated.slice(Math.max(0, updated.length - 100));

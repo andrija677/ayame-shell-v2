@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+ipc="$project_dir/scripts/ayame-v2-ipc"
+
+case "${1:-enable}" in
+    enable)
+        # Ayame V1's generated Hyprland file may already contain a service-aware
+        # V1/V2 router. Avoid registering a second action for the same keys.
+        if grep -Fq "$ipc" "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/ayame-shell.lua" 2>/dev/null; then
+            hyprctl eval 'if ayame_v2_launcher_bind then ayame_v2_launcher_bind:set_enabled(false) end' >/dev/null 2>&1 || true
+            hyprctl eval 'if ayame_v2_capture_bind then ayame_v2_capture_bind:set_enabled(false) end' >/dev/null 2>&1 || true
+            exit 0
+        fi
+        hyprctl eval "if ayame_v2_launcher_bind then ayame_v2_launcher_bind:set_enabled(true) else ayame_v2_launcher_bind=hl.bind(\"SUPER + SUPER_L\", hl.dsp.exec_cmd(\"$ipc launcher\"), {release=true,description=\"Open Ayame V2 launcher\"}) end" >/dev/null
+        hyprctl eval "if ayame_v2_capture_bind then ayame_v2_capture_bind:set_enabled(true) else ayame_v2_capture_bind=hl.bind(\"SHIFT + PRINT\", hl.dsp.exec_cmd(\"$ipc capture\"), {description=\"Select an area with Ayame V2\"}) end" >/dev/null
+        ;;
+    disable)
+        hyprctl eval 'if ayame_v2_launcher_bind then ayame_v2_launcher_bind:set_enabled(false) end' >/dev/null 2>&1 || true
+        hyprctl eval 'if ayame_v2_capture_bind then ayame_v2_capture_bind:set_enabled(false) end' >/dev/null 2>&1 || true
+        ;;
+    *)
+        printf 'Usage: %s {enable|disable}\n' "$0" >&2
+        exit 2
+        ;;
+esac

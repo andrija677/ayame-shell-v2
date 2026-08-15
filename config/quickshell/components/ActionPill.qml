@@ -49,6 +49,7 @@ Rectangle {
 
         AppText {
             visible: root.symbol.length > 0
+            Layout.alignment: Qt.AlignVCenter
             text: root.symbol
             color: pointer.containsMouse || root.activeFocus ? Theme.onAccent
                 : root.highlighted ? Theme.onAccentSoft : Theme.accent
@@ -57,6 +58,7 @@ Rectangle {
         }
 
         AppText {
+            Layout.alignment: Qt.AlignVCenter
             text: root.label
             color: pointer.containsMouse || root.activeFocus ? Theme.onAccent
                 : root.highlighted ? Theme.onAccentSoft : Theme.onSurface

@@ -49,7 +49,7 @@ Item {
                 Rectangle {
                     id: workspace
                     required property int index
-                    width: root.activeWorkspace === index + 1 ? 34 : 28
+                    width: 34
                     height: 34
                     radius: Theme.radiusPill
                     color: root.activeWorkspace === index + 1 ? Theme.accent
@@ -69,7 +69,6 @@ Item {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.workspaceRequested(workspace.index + 1)
                     }
-                    Behavior on width { NumberAnimation { duration: Theme.motionResponsive } }
                     Behavior on color { ColorAnimation { duration: Theme.motionQuick } }
                 }
             }
@@ -97,7 +96,7 @@ Item {
         height: root.compact ? 40 : 46
         radius: ShellSettings.barStyle === "edge" ? Theme.radiusMedium : Theme.radiusPill
         depth: ShellSettings.barStyle === "minimal" ? 0 : 1
-        active: root.activeOverlay === "hub"
+        active: root.activeOverlay === "dashboard"
         color: active ? Theme.accentSoft
             : ShellSettings.barStyle === "minimal" ? "transparent" : Theme.glassRaised
         border.width: ShellSettings.barStyle === "minimal" && !active ? 0 : 1
@@ -131,7 +130,7 @@ Item {
             enabled: ShellSettings.dashboardEnabled
             hoverEnabled: true
             cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: root.overlayRequested("hub")
+            onClicked: root.overlayRequested("dashboard")
         }
     }
 

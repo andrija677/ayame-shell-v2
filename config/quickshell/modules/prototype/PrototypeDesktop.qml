@@ -6,6 +6,7 @@ import "../../components"
 import "../../services"
 import "../../settings"
 import "../../theme"
+import "../dashboard"
 
 FloatingWindow {
     id: root
@@ -49,6 +50,7 @@ FloatingWindow {
     IpcHandler {
         target: "preview"
         function launcher(): void { root.activeOverlay = "launcher"; }
+        function dashboard(): void { root.activeOverlay = "dashboard"; }
         function hub(): void { root.activeOverlay = "hub"; }
         function ai(): void { root.activeOverlay = "ai"; }
         function settings(): void { root.activeOverlay = "settings"; }
@@ -142,15 +144,15 @@ FloatingWindow {
 
         LauncherPanel {
             id: launcherPanel
-            anchors { left: parent.left; top: bar.bottom; bottom: parent.bottom; margins: Theme.space16; bottomMargin: 98 }
+            anchors { horizontalCenter: parent.horizontalCenter; top: bar.bottom; bottom: parent.bottom; topMargin: Theme.space16; bottomMargin: 98 }
             width: Math.min(610, parent.width * 0.58)
             enabled: root.activeOverlay === "launcher"
             opacity: enabled ? 1 : 0
             scale: enabled ? 1 : 0.94
-            transformOrigin: Item.BottomLeft
+            transformOrigin: Item.Bottom
             transform: Translate {
-                x: root.activeOverlay === "launcher" ? 0 : -28
-                Behavior on x { NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeExit } }
+                y: root.activeOverlay === "launcher" ? 0 : 28
+                Behavior on y { NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeExit } }
             }
             onCloseRequested: root.activeOverlay = ""
             onAppRequested: entry => {
@@ -167,6 +169,40 @@ FloatingWindow {
             onPowerRequested: root.activeOverlay = "power"
             Behavior on opacity { NumberAnimation { duration: Theme.motionResponsive } }
             Behavior on scale { NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeEnter } }
+        }
+
+        DashboardPanel {
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+                top: bar.bottom
+                bottom: parent.bottom
+                topMargin: Theme.space16
+                bottomMargin: 98
+            }
+            width: Math.min(470, parent.width - Theme.space40 * 2)
+            enabled: root.activeOverlay === "dashboard"
+            opacity: enabled ? 1 : 0
+            scale: enabled ? 1 : 0.94
+            transformOrigin: Item.Top
+            transform: Translate {
+                y: root.activeOverlay === "dashboard" ? 0 : -24
+                Behavior on y {
+                    NumberAnimation {
+                        duration: Theme.motionResponsive
+                        easing.type: Theme.easeExit
+                    }
+                }
+            }
+            onCloseRequested: root.activeOverlay = ""
+            Behavior on opacity {
+                NumberAnimation { duration: Theme.motionResponsive }
+            }
+            Behavior on scale {
+                NumberAnimation {
+                    duration: Theme.motionResponsive
+                    easing.type: Theme.easeEnter
+                }
+            }
         }
 
         HubPanel {

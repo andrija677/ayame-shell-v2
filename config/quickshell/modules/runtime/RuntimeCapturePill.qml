@@ -12,6 +12,7 @@ import "../../theme"
 PanelWindow {
     id: root
 
+    required property var controller
     property string captureMode: "area"
     property string audioMode: "none"
     property int countdown: 0
@@ -52,6 +53,17 @@ PanelWindow {
             root.displayX = root.snappedSide === "right"
                 ? Math.max(0, root.width - root.pillWidth) : 0;
             if (root.docked) tuckTimer.restart();
+        }
+    }
+
+    Connections {
+        target: root.controller
+        function onAreaCaptureSerialChanged() {
+            root.captureMode = "area";
+            root.countdown = 0;
+            root.error = "";
+            root.status = "";
+            root.beginAreaSelection("screenshot");
         }
     }
 
@@ -196,7 +208,7 @@ PanelWindow {
     }
 
     anchors { top: true; bottom: true; left: true; right: true }
-    exclusiveZone: 0
+    exclusiveZone: -1
     exclusionMode: ExclusionMode.Ignore
     color: "transparent"
     visible: ShellSettings.capturePillEnabled || RecordingService.recording || selectionMode
