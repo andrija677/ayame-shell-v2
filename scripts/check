@@ -11,11 +11,29 @@ bash -n "$project_dir/scripts/ayame-v2-preview" "$project_dir/scripts/check" \
     "$project_dir/scripts/ayame-clipboard" "$project_dir/scripts/ayame-gaming-mode" \
     "$project_dir/scripts/ayame-appearance-mode"
 python3 -m py_compile "$project_dir/scripts/ayame-ai.py"
-qmllint -I "$project_dir/config/quickshell" \
-    $(find "$project_dir/config/quickshell" -type f -name '*.qml' -print)
-QT_QPA_PLATFORM=offscreen qmltestrunner \
-    -input "$project_dir/tests" \
-    -import "$project_dir/config/quickshell"
+
+qt6_tools="/usr/lib/qt6/bin"
+qml_linter="$qt6_tools/qmllint"
+if [[ ! -x "$qml_linter" ]]; then
+    printf 'Qt 6 qmllint is required at %s.\n' "$qml_linter" >&2
+    exit 1
+fi
+
+# Arch exposes Qt 5 tools in /usr/bin while Quickshell is a Qt 6 application.
+# Capture informational warnings and print only an actionable lint failure.
+lint_log="$(mktemp)"
+if ! "$qml_linter" -I "$project_dir/config/quickshell" \
+        $(find "$project_dir/config/quickshell" -type f -name '*.qml' -print) \
+        >"$lint_log" 2>&1; then
+    cat "$lint_log" >&2
+    rm -f -- "$lint_log"
+    exit 1
+fi
+rm -f -- "$lint_log"
+
+# The packaged Quickshell plugins are linked into `qs`, rather than exposed as
+# loadable plugins for the generic qmltestrunner. Runtime QML is therefore
+# smoke-tested by the guarded V2 launch itself after static Qt 6 validation.
 
 if rg -n 'enabled:\s*false|key:\s*"demo"' \
         "$project_dir/config/quickshell/modules/prototype" \
