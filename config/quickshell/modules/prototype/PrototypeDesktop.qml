@@ -206,22 +206,56 @@ FloatingWindow {
         }
 
         HubPanel {
+            id: hubPanel
             hostWindow: root
             anchors { right: parent.right; top: bar.bottom; bottom: parent.bottom; margins: Theme.space16; bottomMargin: 98 }
             width: Math.min(460, parent.width * 0.44)
             enabled: root.activeOverlay === "hub"
             opacity: enabled ? 1 : 0
-            scale: enabled ? 1 : 0.94
-            transformOrigin: Item.TopRight
-            transform: Translate {
-                x: root.activeOverlay === "hub" ? 0 : 28
-                Behavior on x { NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeExit } }
-            }
+            transform: [
+                Translate {
+                    x: root.activeOverlay === "hub" ? 0 : 20
+                    y: root.activeOverlay === "hub" ? 0 : -12
+                    Behavior on x {
+                        NumberAnimation {
+                            duration: Theme.motionResponsive
+                            easing.type: root.activeOverlay === "hub"
+                                ? Theme.easeEnter : Theme.easeExit
+                        }
+                    }
+                    Behavior on y {
+                        NumberAnimation {
+                            duration: Theme.motionResponsive
+                            easing.type: root.activeOverlay === "hub"
+                                ? Theme.easeEnter : Theme.easeExit
+                        }
+                    }
+                },
+                Scale {
+                    origin.x: hubPanel.width
+                    origin.y: 0
+                    xScale: root.activeOverlay === "hub" ? 1 : 0.92
+                    yScale: root.activeOverlay === "hub" ? 1 : 0.84
+                    Behavior on xScale {
+                        NumberAnimation {
+                            duration: Theme.motionResponsive
+                            easing.type: root.activeOverlay === "hub"
+                                ? Theme.easeEnter : Theme.easeExit
+                        }
+                    }
+                    Behavior on yScale {
+                        NumberAnimation {
+                            duration: Theme.motionResponsive
+                            easing.type: root.activeOverlay === "hub"
+                                ? Theme.easeEnter : Theme.easeExit
+                        }
+                    }
+                }
+            ]
             onCloseRequested: root.activeOverlay = ""
             onSettingsRequested: root.activeOverlay = "settings"
             onPowerRequested: root.activeOverlay = "power"
             Behavior on opacity { NumberAnimation { duration: Theme.motionResponsive } }
-            Behavior on scale { NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeEnter } }
         }
 
         AiPanel {

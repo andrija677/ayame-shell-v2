@@ -28,7 +28,7 @@ PanelWindow {
     margins { top: 76; right: 16 }
     implicitWidth: 380
     implicitHeight: Math.max(1, popupColumn.implicitHeight)
-    exclusiveZone: 0
+    exclusiveZone: -1
     exclusionMode: ExclusionMode.Ignore
     color: "transparent"
     visible: popups.length > 0

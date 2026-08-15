@@ -87,18 +87,56 @@ PanelWindow {
     }
 
     HubPanel {
+        id: hubPanel
         hostWindow: root
         anchors { right: parent.right; top: parent.top; bottom: parent.bottom; margins: Theme.space16; topMargin: 88; bottomMargin: 112 }
         width: Math.min(460, parent.width * 0.44)
         enabled: root.controller.activeOverlay === "hub"
         opacity: enabled ? 1 : 0
-        scale: enabled ? 1 : 0.94
-        transformOrigin: Item.TopRight
+        transform: [
+            Translate {
+                x: root.controller.activeOverlay === "hub" ? 0 : 20
+                y: root.controller.activeOverlay === "hub" ? 0 : -12
+                Behavior on x {
+                    NumberAnimation {
+                        duration: Theme.motionResponsive
+                        easing.type: root.controller.activeOverlay === "hub"
+                            ? Theme.easeEnter : Theme.easeExit
+                    }
+                }
+                Behavior on y {
+                    NumberAnimation {
+                        duration: Theme.motionResponsive
+                        easing.type: root.controller.activeOverlay === "hub"
+                            ? Theme.easeEnter : Theme.easeExit
+                    }
+                }
+            },
+            Scale {
+                origin.x: hubPanel.width
+                origin.y: 0
+                xScale: root.controller.activeOverlay === "hub" ? 1 : 0.92
+                yScale: root.controller.activeOverlay === "hub" ? 1 : 0.84
+                Behavior on xScale {
+                    NumberAnimation {
+                        duration: Theme.motionResponsive
+                        easing.type: root.controller.activeOverlay === "hub"
+                            ? Theme.easeEnter : Theme.easeExit
+                    }
+                }
+                Behavior on yScale {
+                    NumberAnimation {
+                        duration: Theme.motionResponsive
+                        easing.type: root.controller.activeOverlay === "hub"
+                            ? Theme.easeEnter : Theme.easeExit
+                    }
+                }
+            }
+        ]
         onCloseRequested: root.controller.closeOverlay()
         onSettingsRequested: root.controller.activeOverlay = "settings"
         onPowerRequested: root.controller.activeOverlay = "power"
         Behavior on opacity { NumberAnimation { duration: Theme.motionResponsive } }
-        Behavior on scale { NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeEnter } }
     }
 
     AiPanel {
