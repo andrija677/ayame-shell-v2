@@ -36,7 +36,7 @@ GlassSurface {
                 RowLayout {
                     Layout.fillWidth: true
                     AppIcon { icon:"auto_awesome"; backgroundColor:Theme.accent; iconColor:Theme.onAccent; implicitWidth:44; implicitHeight:44 }
-                    ColumnLayout { Layout.fillWidth:true; spacing:0; AppText{text:"Ayame";font.weight:Font.ExtraBold};AppText{text:"Settings";color:Theme.onSurfaceMuted;font.pixelSize:Theme.fontSmall} }
+                    ColumnLayout { Layout.fillWidth:true; spacing:0; AppText{text:"Ayame";font.weight:Font.ExtraBold}AppText{text:"Settings";color:Theme.onSurfaceMuted;font.pixelSize:Theme.fontSmall} }
                 }
                 Item { implicitHeight:Theme.space12 }
                 Repeater {
@@ -47,7 +47,7 @@ GlassSurface {
                         required property int index
                         Layout.fillWidth:true; implicitHeight:54; radius:Theme.radiusMedium
                         color:root.currentPage===index?Theme.accentSoft:navMouse.containsMouse?Theme.glassHighest:"transparent"
-                        RowLayout { anchors{fill:parent;leftMargin:Theme.space12;rightMargin:Theme.space12};spacing:Theme.space12;AppIcon{icon:navRow.modelData.icon;implicitWidth:28;implicitHeight:28;iconSize:19;iconColor:root.currentPage===navRow.index?Theme.onAccentSoft:Theme.onSurfaceMuted};ColumnLayout{Layout.fillWidth:true;spacing:0;AppText{text:navRow.modelData.title;color:root.currentPage===navRow.index?Theme.onAccentSoft:Theme.onSurface;font.weight:root.currentPage===navRow.index?Font.Bold:Font.Medium};AppText{Layout.fillWidth:true;text:navRow.modelData.description;color:Theme.onSurfaceMuted;font.pixelSize:9;elide:Text.ElideRight}} }
+                        RowLayout { anchors{fill:parent;leftMargin:Theme.space12;rightMargin:Theme.space12}spacing:Theme.space12;AppIcon{icon:navRow.modelData.icon;implicitWidth:28;implicitHeight:28;iconSize:19;iconColor:root.currentPage===navRow.index?Theme.onAccentSoft:Theme.onSurfaceMuted}ColumnLayout{Layout.fillWidth:true;spacing:0;AppText{text:navRow.modelData.title;color:root.currentPage===navRow.index?Theme.onAccentSoft:Theme.onSurface;font.weight:root.currentPage===navRow.index?Font.Bold:Font.Medium}AppText{Layout.fillWidth:true;text:navRow.modelData.description;color:Theme.onSurfaceMuted;font.pixelSize:9;elide:Text.ElideRight}} }
                         MouseArea{id:navMouse;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:root.currentPage=navRow.index}
                         Behavior on color{ColorAnimation{duration:Theme.motionQuick}}
                     }
@@ -63,7 +63,7 @@ GlassSurface {
             spacing:Theme.space16
             RowLayout {
                 Layout.fillWidth:true
-                ColumnLayout { Layout.fillWidth:true; spacing:2; AppText{text:root.pages[root.currentPage].title;font.pixelSize:Theme.fontDisplay;font.weight:Font.ExtraBold};AppText{text:root.pages[root.currentPage].description;color:Theme.onSurfaceMuted} }
+                ColumnLayout { Layout.fillWidth:true; spacing:2; AppText{text:root.pages[root.currentPage].title;font.pixelSize:Theme.fontDisplay;font.weight:Font.ExtraBold}AppText{text:root.pages[root.currentPage].description;color:Theme.onSurfaceMuted} }
                 IconButton { icon:"close";accessibleName:"Close Settings";onActivated:root.closeRequested() }
             }
             StackLayout {

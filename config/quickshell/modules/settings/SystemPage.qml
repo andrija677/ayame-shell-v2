@@ -25,20 +25,20 @@ Flickable {
         GlassSurface {
             Layout.fillWidth:true; implicitHeight:diagnosticContent.implicitHeight+Theme.space32; radius:Theme.radiusLarge; depth:1
             ColumnLayout {
-                id:diagnosticContent; anchors{left:parent.left;right:parent.right;verticalCenter:parent.verticalCenter;margins:Theme.space16}; spacing:Theme.space12
-                RowLayout { Layout.fillWidth:true; ColumnLayout{Layout.fillWidth:true;AppText{text:"Ayame Diagnostics";font.weight:Font.Bold};AppText{text:root.diagnosticStatus;color:Theme.onSurfaceMuted;font.pixelSize:Theme.fontSmall}}; ActionPill{label:doctor.running?"Checking":"Run check";enabled:!doctor.running;primary:true;onActivated:doctor.running=true}; ActionPill{label:"Test notification";onActivated:{actionProcess.command=["bash",Quickshell.shellDir+"/../../scripts/ayame-doctor","test-notification"];actionProcess.running=true}} }
+                id:diagnosticContent; anchors{left:parent.left;right:parent.right;verticalCenter:parent.verticalCenter;margins:Theme.space16} spacing:Theme.space12
+                RowLayout { Layout.fillWidth:true; ColumnLayout{Layout.fillWidth:true;AppText{text:"Ayame Diagnostics";font.weight:Font.Bold}AppText{text:root.diagnosticStatus;color:Theme.onSurfaceMuted;font.pixelSize:Theme.fontSmall}} ActionPill{label:doctor.running?"Checking":"Run check";enabled:!doctor.running;primary:true;onActivated:doctor.running=true} ActionPill{label:"Test notification";onActivated:{actionProcess.command=["bash",Quickshell.shellDir+"/../../scripts/ayame-doctor","test-notification"];actionProcess.running=true}} }
                 Repeater {
                     model:root.diagnostics
                     Rectangle {
                         required property var modelData; Layout.fillWidth:true; implicitHeight:52; radius:Theme.radiusMedium; color:Theme.glassHighest
-                        RowLayout { anchors{fill:parent;margins:Theme.space12}; Rectangle{width:9;height:9;radius:5;color:parent.parent.modelData.state==="healthy"?Theme.success:parent.parent.modelData.state==="error"?Theme.danger:Theme.warning}; ColumnLayout{Layout.fillWidth:true;spacing:0;AppText{text:parent.parent.parent.modelData.label;font.weight:Font.Bold};AppText{Layout.fillWidth:true;text:parent.parent.parent.modelData.detail;color:Theme.onSurfaceMuted;font.pixelSize:Theme.fontSmall;elide:Text.ElideRight}}; AppText{text:parent.parent.modelData.state;color:parent.parent.modelData.state==="healthy"?Theme.success:Theme.warning;font.pixelSize:Theme.fontSmall;font.weight:Font.Bold} }
+                        RowLayout { anchors{fill:parent;margins:Theme.space12} Rectangle{width:9;height:9;radius:5;color:parent.parent.modelData.state==="healthy"?Theme.success:parent.parent.modelData.state==="error"?Theme.danger:Theme.warning} ColumnLayout{Layout.fillWidth:true;spacing:0;AppText{text:parent.parent.parent.modelData.label;font.weight:Font.Bold}AppText{Layout.fillWidth:true;text:parent.parent.parent.modelData.detail;color:Theme.onSurfaceMuted;font.pixelSize:Theme.fontSmall;elide:Text.ElideRight}} AppText{text:parent.parent.modelData.state;color:parent.parent.modelData.state==="healthy"?Theme.success:Theme.warning;font.pixelSize:Theme.fontSmall;font.weight:Font.Bold} }
                     }
                 }
             }
         }
         GlassSurface {
             Layout.fillWidth:true; implicitHeight:82; radius:Theme.radiusLarge; depth:1
-            RowLayout { anchors{fill:parent;margins:Theme.space16}; AppIcon{icon:"system_update";backgroundColor:Theme.accentSoft;iconColor:Theme.onAccentSoft;implicitWidth:42;implicitHeight:42}; ColumnLayout{Layout.fillWidth:true;AppText{text:"Ayame Shell V2";font.weight:Font.Bold};AppText{text:root.updateStatus;color:Theme.onSurfaceMuted;font.pixelSize:Theme.fontSmall}}; ActionPill{label:updateProcess.running?"Checking":"Check for updates";enabled:!updateProcess.running;onActivated:{updateProcess.command=["git","ls-remote","--exit-code","origin","refs/heads/main"];updateProcess.running=true}} }
+            RowLayout { anchors{fill:parent;margins:Theme.space16} AppIcon{icon:"system_update";backgroundColor:Theme.accentSoft;iconColor:Theme.onAccentSoft;implicitWidth:42;implicitHeight:42} ColumnLayout{Layout.fillWidth:true;AppText{text:"Ayame Shell V2";font.weight:Font.Bold}AppText{text:root.updateStatus;color:Theme.onSurfaceMuted;font.pixelSize:Theme.fontSmall}} ActionPill{label:updateProcess.running?"Checking":"Check for updates";enabled:!updateProcess.running;onActivated:{updateProcess.command=["git","ls-remote","--exit-code","origin","refs/heads/main"];updateProcess.running=true}} }
         }
     }
     Process {
