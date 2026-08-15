@@ -18,7 +18,7 @@ PanelWindow {
     visible: ShellSettings.barEnabled
     color: "transparent"
     WlrLayershell.namespace: "ayame-shell-v2-bar"
-    WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.layer: WlrLayer.Overlay
 
     PrototypeBar {
         anchors { fill: parent; margins: Theme.space16; bottomMargin: Theme.space8 }

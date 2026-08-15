@@ -56,7 +56,7 @@ PanelWindow {
     visible: ShellSettings.dockEnabled
     color: "transparent"
     WlrLayershell.namespace: "ayame-shell-v2-dock"
-    WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.layer: WlrLayer.Overlay
 
     HoverHandler { onHoveredChanged: root.hovered = hovered }
 

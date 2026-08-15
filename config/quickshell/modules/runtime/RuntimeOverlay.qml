@@ -19,7 +19,9 @@ PanelWindow {
     color: "transparent"
     visible: open
     WlrLayershell.namespace: "ayame-shell-v2-overlay"
-    WlrLayershell.layer: WlrLayer.Overlay
+    // The backdrop and opened panel sit above applications, while Ayame's
+    // persistent chrome uses the Overlay layer and therefore stays crisp.
+    WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: visible
         ? WlrLayershell.OnDemand : WlrLayershell.None
 
