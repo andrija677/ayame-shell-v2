@@ -10,7 +10,7 @@ bash -n "$project_dir/scripts/ayame-v2-preview" "$project_dir/scripts/check" \
     "$project_dir/scripts/ayame-record" "$project_dir/scripts/ayame-doctor" \
     "$project_dir/scripts/ayame-clipboard" "$project_dir/scripts/ayame-gaming-mode" \
     "$project_dir/scripts/ayame-appearance-mode" "$project_dir/scripts/ayame-v2-ipc" \
-    "$project_dir/scripts/ayame-v2-keybinds"
+    "$project_dir/scripts/ayame-v2-keybinds" "$project_dir/scripts/ayame-kitty-colors"
 python3 -m py_compile "$project_dir/scripts/ayame-ai.py"
 
 qt6_tools="/usr/lib/qt6/bin"

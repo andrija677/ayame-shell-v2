@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.SystemTray
+import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
 import "../../components"
 import "../../services"
@@ -17,6 +18,9 @@ Item {
     property date currentTime: new Date()
     property bool trayExpanded: false
     readonly property var battery: UPower.displayDevice
+    readonly property var sink: Pipewire.defaultAudioSink
+    readonly property var audio: sink?.audio ?? null
+    property bool volumeFeedbackVisible: false
     readonly property bool batteryAvailable: battery?.isPresent
         && battery?.isLaptopBattery
     readonly property int batteryPercent: Math.round(
@@ -159,12 +163,70 @@ Item {
                 implicitWidth: 30; implicitHeight: 30; iconSize: 17
                 iconColor: Theme.onSurfaceMuted
             }
-            AppIcon {
+            Rectangle {
                 visible: ShellSettings.audioEnabled
-                icon: ControlService.muted || ControlService.volume === 0
-                    ? "volume_off" : "volume_up"
-                implicitWidth: 30; implicitHeight: 30; iconSize: 17
-                iconColor: Theme.onSurfaceMuted
+                implicitWidth: root.volumeFeedbackVisible ? 74 : 30
+                implicitHeight: 30
+                radius: Theme.radiusPill
+                color: volumePointer.containsMouse || root.volumeFeedbackVisible
+                    ? Theme.glassHighest : "transparent"
+
+                RowLayout {
+                    anchors.centerIn: parent
+                    spacing: Theme.space4
+                    AppIcon {
+                        icon: ControlService.muted || ControlService.volume === 0
+                            ? "volume_off"
+                            : ControlService.volume < 0.34 ? "volume_mute"
+                            : ControlService.volume < 0.67 ? "volume_down"
+                            : "volume_up"
+                        implicitWidth: 26
+                        implicitHeight: 26
+                        iconSize: 17
+                        iconColor: ControlService.muted
+                            ? Theme.danger : Theme.onSurfaceMuted
+                    }
+                    AppText {
+                        visible: root.volumeFeedbackVisible
+                        text: ControlService.muted ? "Muted"
+                            : Math.round(ControlService.volume * 100) + "%"
+                        color: ControlService.muted
+                            ? Theme.danger : Theme.onSurfaceMuted
+                        font.family: ControlService.muted
+                            ? Theme.fontFamily : Theme.numericFontFamily
+                        font.pixelSize: Theme.fontSmall
+                        font.weight: Font.Bold
+                    }
+                }
+
+                MouseArea {
+                    id: volumePointer
+                    anchors.fill: parent
+                    enabled: root.audio !== null
+                    hoverEnabled: true
+                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: {
+                        ControlService.toggleMute();
+                        root.revealVolumeFeedback();
+                    }
+                    onWheel: event => {
+                        const direction = event.angleDelta.y > 0 ? 1 : -1;
+                        ControlService.setVolume(ControlService.volume
+                            + direction * 0.05);
+                        root.revealVolumeFeedback();
+                        event.accepted = true;
+                    }
+                }
+
+                Behavior on implicitWidth {
+                    NumberAnimation {
+                        duration: Theme.motionExpressive
+                        easing.type: Easing.InOutCubic
+                    }
+                }
+                Behavior on color {
+                    ColorAnimation { duration: Theme.motionQuick }
+                }
             }
             AppText {
                 visible: WeatherService.configured
@@ -230,5 +292,20 @@ Item {
         repeat: true
         running: true
         onTriggered: root.currentTime = new Date()
+    }
+
+    Timer {
+        id: volumeFeedbackTimer
+        interval: 2500
+        onTriggered: root.volumeFeedbackVisible = false
+    }
+
+    function revealVolumeFeedback() {
+        volumeFeedbackVisible = true;
+        volumeFeedbackTimer.restart();
+    }
+
+    PwObjectTracker {
+        objects: root.sink ? [root.sink] : []
     }
 }

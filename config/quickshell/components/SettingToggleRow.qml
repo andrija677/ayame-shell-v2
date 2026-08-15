@@ -18,7 +18,15 @@ GlassSurface {
     depth: 1
     opacity: available ? 1 : 0.58
 
+    MouseArea {
+        anchors.fill: parent
+        enabled: root.available
+        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+        onClicked: root.toggled(!root.checked)
+    }
+
     RowLayout {
+        z: 1
         spacing: Theme.space12
 
         anchors {

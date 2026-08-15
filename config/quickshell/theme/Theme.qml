@@ -51,14 +51,23 @@ QtObject {
 
     readonly property color glass: alpha(
         mix(surfaceBase, accent, ShellSettings.surfaceTint),
-        ShellSettings.glassBlur ? ShellSettings.glassOpacity : 0.98)
+        ShellSettings.glassBlur
+            ? light ? Math.max(0.90, ShellSettings.glassOpacity)
+                : ShellSettings.glassOpacity
+            : 0.98)
     readonly property color glassRaised: alpha(
         mix(surfaceRaisedBase, accent, ShellSettings.surfaceTint * 0.8),
-        ShellSettings.glassBlur ? Math.min(0.96, ShellSettings.glassOpacity + 0.08) : 1)
+        ShellSettings.glassBlur
+            ? light ? Math.max(0.94, ShellSettings.glassOpacity)
+                : Math.min(0.96, ShellSettings.glassOpacity + 0.08)
+            : 1)
     readonly property color glassHighest: alpha(
         mix(surfaceHighestBase, accent, ShellSettings.surfaceTint * 0.65),
-        ShellSettings.glassBlur ? Math.min(0.98, ShellSettings.glassOpacity + 0.14) : 1)
-    readonly property color glassStroke: alpha(outlineSoft, light ? 0.72 : 0.62)
+        ShellSettings.glassBlur
+            ? light ? Math.max(0.97, ShellSettings.glassOpacity)
+                : Math.min(0.98, ShellSettings.glassOpacity + 0.14)
+            : 1)
+    readonly property color glassStroke: alpha(outlineSoft, light ? 0.20 : 0.62)
     readonly property color glassHighlight: alpha(light ? "#FFFFFF" : "#DCE8FF",
         light ? 0.56 : 0.12)
 

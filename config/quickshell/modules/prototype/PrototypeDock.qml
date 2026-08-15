@@ -94,11 +94,11 @@ GlassSurface {
                         bottom: parent.bottom
                         horizontalCenter: parent.horizontalCenter
                     }
-                    width: root.launchedIndex === index || modelData.running ? 16 : 4
-                    height: 3
+                    width: modelData.active ? 16 : modelData.running ? 4 : 0
+                    height: modelData.active ? 3 : 4
                     radius: 2
-                    color: Theme.accent
-                    opacity: root.launchedIndex === index || modelData.running ? 1 : 0
+                    color: modelData.active ? Theme.accent : Theme.outline
+                    opacity: modelData.active || modelData.running ? 1 : 0
                     Behavior on width { NumberAnimation { duration: Theme.motionResponsive } }
                 }
 

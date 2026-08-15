@@ -37,7 +37,9 @@ Rectangle {
         radius: width / 2
         x: root.checked ? root.width - width - 4 : 6
         anchors.verticalCenter: parent.verticalCenter
-        color: root.checked ? Theme.onAccent : Theme.onSurfaceMuted
+        color: root.checked
+            ? Theme.light ? "#FFFFFF" : Theme.onAccent
+            : Theme.onSurfaceMuted
 
         Behavior on x {
             NumberAnimation { duration: Theme.motionResponsive; easing.type: Theme.easeEnter }

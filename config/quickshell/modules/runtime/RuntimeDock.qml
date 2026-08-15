@@ -26,7 +26,7 @@ PanelWindow {
                 result.push({ id: entry.id, entry: entry, label: entry.name,
                     icon: entry.icon, tone: result.length % 3 === 0 ? "secondary"
                         : result.length % 3 === 1 ? "neutral" : "tertiary",
-                    running: false, toplevel: null });
+                    running: false, active: false, toplevel: null });
         }
         for (const toplevel of Hyprland.toplevels.values) {
             if (toplevel.monitor !== root.hyprlandMonitor)
@@ -40,9 +40,14 @@ PanelWindow {
             const existing = result.findIndex(item => item.id === id);
             const item = { id: id, entry: entry, label: entry?.name || appId,
                 icon: entry?.icon || "application-x-executable", tone: "primary",
-                running: true, toplevel: toplevel };
-            if (existing >= 0)
+                running: true, active: toplevel.activated, toplevel: toplevel };
+            if (existing >= 0) {
+                const previous = result[existing];
+                item.active = previous.active || toplevel.activated;
+                item.toplevel = toplevel.activated
+                    ? toplevel : previous.toplevel || toplevel;
                 result[existing] = item;
+            }
             else
                 result.push(item);
         }

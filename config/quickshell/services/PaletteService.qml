@@ -16,11 +16,18 @@ QtObject {
     property string pendingPath: ""
     property string detectedWallpaper: ""
     property real wallpaperLuminance: paletteCache.luminance
+    property bool kittySyncPending: false
 
     readonly property bool available: colors !== null
     readonly property bool active: ShellSettings.dynamicColorsEnabled && available
     readonly property string recommendedAppearance:
         wallpaperLuminance >= 0.58 ? "light" : "dark"
+
+    onColorsChanged: kittySyncRetry.restart()
+    onRecommendedAppearanceChanged: {
+        if (ShellSettings.appearanceMode === "automatic")
+            kittySyncRetry.restart();
+    }
 
     function schemeForStyle(style) {
         if (style === "vibrant") return "scheme-vibrant";
@@ -45,6 +52,35 @@ QtObject {
         }
         return 0.2126 * channel(0) + 0.7152 * channel(2)
             + 0.0722 * channel(4);
+    }
+
+    function syncKitty() {
+        if (Quickshell.env("AYAME_V2_RUNTIME") !== "1") return;
+        if (kittySync.running) {
+            kittySyncPending = true;
+            return;
+        }
+        const mode = ShellSettings.appearanceMode === "automatic"
+            ? recommendedAppearance : ShellSettings.appearanceMode;
+        function selected(name, darkFallback, lightFallback) {
+            const fallback = mode === "light" ? lightFallback : darkFallback;
+            return active ? modeColor(name, mode, fallback) : fallback;
+        }
+        kittySyncPending = false;
+        kittySync.command = [
+            Quickshell.shellDir + "/../../scripts/ayame-kitty-colors",
+            selected("background", "#0A101A", "#F8F9FF"),
+            selected("on_surface", "#E9EEF8", "#171C24"),
+            selected("primary", "#A9C7FF", "#405F91"),
+            selected("on_primary", "#0A305F", "#FFFFFF"),
+            selected("surface", "#151D2A", "#F5F7FF"),
+            selected("surface_container_high", "#2A3546", "#E7ECF7"),
+            selected("outline", "#8490A1", "#727985"),
+            selected("error", "#FFB4AB", "#BA1A1A"),
+            mode === "light" ? "#2D6A46" : "#88D6A7",
+            mode === "light" ? "#795A00" : "#F1CB72"
+        ];
+        kittySync.running = true;
     }
 
     function generate(path) {
@@ -117,6 +153,7 @@ QtObject {
                     root.wallpaperLuminance = root.colorLuminance(sourceColor);
                     paletteCache.luminance = root.wallpaperLuminance;
                     paletteFile.writeAdapter();
+                    root.syncKitty();
 
                     luminanceProbe.command = [
                         "magick", root.sourcePath, "-resize", "1x1!",
@@ -153,6 +190,31 @@ QtObject {
                 }
             }
         }
+    }
+
+    property Process kittySync: Process {
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.trim().length > 0)
+                    root.error = "Kitty colors: " + text.trim().split("\n").pop();
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            if (root.kittySyncPending)
+                kittySyncRetry.restart();
+            else if (exitCode !== 0 && root.error.length === 0)
+                root.error = "Kitty colors could not be updated";
+        }
+    }
+
+    property Timer kittySyncRetry: Timer {
+        interval: 80
+        onTriggered: root.syncKitty()
+    }
+
+    property Timer initialKittySync: Timer {
+        interval: 180
+        onTriggered: root.syncKitty()
     }
 
     property Timer queuedGenerate: Timer {
@@ -211,6 +273,7 @@ QtObject {
     }
 
     Component.onCompleted: {
+        initialKittySync.restart();
         if (ShellSettings.wallpaperPath.length > 0)
             generate(ShellSettings.wallpaperPath);
     }
@@ -225,5 +288,7 @@ QtObject {
             if (root.detectedWallpaper.length > 0)
                 root.regenerate.restart();
         }
+        function onAppearanceModeChanged() { root.syncKitty(); }
+        function onDynamicColorsEnabledChanged() { root.syncKitty(); }
     }
 }

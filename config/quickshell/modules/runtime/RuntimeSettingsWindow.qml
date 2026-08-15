@@ -12,11 +12,11 @@ FloatingWindow {
     implicitWidth: 920
     implicitHeight: 640
     minimumSize: Qt.size(760, 540)
-    color: Theme.background
+    color: "transparent"
     visible: controller.activeOverlay === "settings"
 
     SettingsPanel {
-        anchors { fill: parent; margins: Theme.space16 }
+        anchors.fill: parent
         onCloseRequested: root.controller.closeOverlay()
     }
 

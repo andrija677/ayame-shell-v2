@@ -12,7 +12,7 @@ Rectangle {
     color: active ? Theme.accentSoft
         : depth >= 2 ? Theme.glassHighest
         : depth === 1 ? Theme.glassRaised : Theme.glass
-    border.width: 1
+    border.width: active || !Theme.light ? 1 : 0
     border.color: active ? Theme.accent : Theme.glassStroke
 
     Rectangle {
@@ -25,7 +25,7 @@ Rectangle {
         }
         height: 1
         color: Theme.glassHighlight
-        visible: !root.active
+        visible: !root.active && !Theme.light
     }
 
     Behavior on color {
