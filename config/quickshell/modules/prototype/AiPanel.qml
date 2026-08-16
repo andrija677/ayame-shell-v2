@@ -31,6 +31,14 @@ GlassSurface {
                 ? " Use a warm, clever, lightly mischievous fox-girl voice, while staying honest."
                 : "")
 
+    readonly property string providerLabel: ShellSettings.aiProvider === "gemini"
+        ? "Gemini" : ShellSettings.aiProvider === "ollama"
+            ? "Ollama" : ShellSettings.aiProvider
+    readonly property string personalityLabel: ShellSettings.aiPersonality === "cat"
+        ? "Cat mode" : ShellSettings.aiPersonality === "fox"
+            ? "Fox mode" : ShellSettings.aiPersonality === "custom"
+                ? "Custom voice" : "Calm mode"
+
     function append(role, content) {
         const copy = messages.slice();
         copy.push({ role: role, content: content });
@@ -173,12 +181,12 @@ GlassSurface {
                 spacing: 1
                 AppText { text: "Ayame AI"; font.pixelSize: Theme.fontTitle; font.weight: Font.ExtraBold }
                 AppText {
-                    text: ShellSettings.aiProvider + " • " + ShellSettings.aiPersonality
+                    text: root.providerLabel + "  ·  " + root.personalityLabel
                     color: Theme.onSurfaceMuted
                     font.pixelSize: Theme.fontSmall
                 }
             }
-            IconButton { icon: "edit_square"; accessibleName: "New chat"; onActivated: root.clearHistory() }
+            IconButton { icon: "refresh"; accessibleName: "New chat"; onActivated: root.clearHistory() }
             IconButton { icon: "settings"; accessibleName: "AI settings"; onActivated: root.settingsRequested() }
             IconButton { icon: "close"; accessibleName: "Close Ayame AI"; onActivated: root.closeRequested() }
         }
@@ -189,36 +197,70 @@ GlassSurface {
 
             ColumnLayout {
                 anchors.centerIn: parent
-                width: Math.min(parent.width - Theme.space32, 350)
-                spacing: Theme.space12
+                width: Math.min(parent.width - Theme.space24, 390)
                 visible: root.messages.length === 0
-                AppIcon {
-                    Layout.alignment: Qt.AlignHCenter
-                    icon: "temp_preferences_custom"
-                    backgroundColor: Theme.accentSoft
-                    iconColor: Theme.onAccentSoft
-                    implicitWidth: 68
-                    implicitHeight: 68
-                    iconSize: 32
-                }
-                AppText {
+                spacing: 0
+
+                GlassSurface {
                     Layout.fillWidth: true
-                    text: "Hey twin, what are we making?"
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: Theme.fontTitle
-                    font.weight: Font.Bold
-                }
-                AppText {
-                    Layout.fillWidth: true
-                    text: "Ayame can think with you, but never touches the system on her own."
-                    horizontalAlignment: Text.AlignHCenter
-                    color: Theme.onSurfaceMuted
-                    wrapMode: Text.WordWrap
-                }
-                RowLayout {
-                    Layout.alignment: Qt.AlignHCenter
-                    ActionPill { label: "Explain this shell"; onActivated: root.sendText(label) }
-                    ActionPill { label: "Help me plan"; onActivated: root.sendText(label) }
+                    implicitHeight: welcomeContent.implicitHeight + Theme.space40
+                    radius: Theme.radiusLarge
+                    depth: 1
+
+                    ColumnLayout {
+                        id: welcomeContent
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            verticalCenter: parent.verticalCenter
+                            margins: Theme.space20
+                        }
+                        spacing: Theme.space12
+
+                        AppIcon {
+                            Layout.alignment: Qt.AlignHCenter
+                            icon: "auto_awesome"
+                            backgroundColor: Theme.accent
+                            iconColor: Theme.onAccent
+                            implicitWidth: 64
+                            implicitHeight: 64
+                            iconSize: 30
+                        }
+
+                        AppText {
+                            Layout.fillWidth: true
+                            text: "What’s on your mind, twin?"
+                            horizontalAlignment: Text.AlignHCenter
+                            font.pixelSize: Theme.fontTitle
+                            font.weight: Font.ExtraBold
+                        }
+
+                        AppText {
+                            Layout.fillWidth: true
+                            text: "Ask a question, untangle an idea, or plan your next build with Ayame."
+                            horizontalAlignment: Text.AlignHCenter
+                            color: Theme.onSurfaceMuted
+                            wrapMode: Text.WordWrap
+                        }
+
+                        RowLayout {
+                            Layout.alignment: Qt.AlignHCenter
+                            spacing: Theme.space8
+
+                            ActionPill {
+                                label: "Help me debug"
+                                symbol: "✦"
+                                primary: true
+                                onActivated: root.sendText("Help me debug something")
+                            }
+
+                            ActionPill {
+                                label: "Make a plan"
+                                symbol: "→"
+                                onActivated: root.sendText("Help me make a plan")
+                            }
+                        }
+                    }
                 }
             }
 

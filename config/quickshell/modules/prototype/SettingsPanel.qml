@@ -61,10 +61,44 @@ GlassSurface {
             Layout.fillWidth:true
             Layout.fillHeight:true
             spacing:Theme.space16
-            RowLayout {
-                Layout.fillWidth:true
-                ColumnLayout { Layout.fillWidth:true; spacing:2; AppText{text:root.pages[root.currentPage].title;font.pixelSize:Theme.fontDisplay;font.weight:Font.ExtraBold}AppText{text:root.pages[root.currentPage].description;color:Theme.onSurfaceMuted} }
-                IconButton { icon:"close";accessibleName:"Close Settings";onActivated:root.closeRequested() }
+            Item {
+                Layout.fillWidth: true
+                implicitHeight: 54
+
+                ColumnLayout {
+                    anchors {
+                        left: parent.left
+                        right: settingsClose.left
+                        verticalCenter: parent.verticalCenter
+                        rightMargin: Theme.space12
+                    }
+                    spacing: 2
+
+                    AppText {
+                        Layout.fillWidth: true
+                        text: root.pages[root.currentPage].title
+                        font.pixelSize: Theme.fontDisplay
+                        font.weight: Font.ExtraBold
+                    }
+
+                    AppText {
+                        Layout.fillWidth: true
+                        text: root.pages[root.currentPage].description
+                        color: Theme.onSurfaceMuted
+                        elide: Text.ElideRight
+                    }
+                }
+
+                IconButton {
+                    id: settingsClose
+                    anchors {
+                        right: parent.right
+                        verticalCenter: parent.verticalCenter
+                    }
+                    icon: "close"
+                    accessibleName: "Close Settings"
+                    onActivated: root.closeRequested()
+                }
             }
             StackLayout {
                 Layout.fillWidth:true
