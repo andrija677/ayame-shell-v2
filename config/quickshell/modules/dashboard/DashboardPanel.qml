@@ -164,10 +164,23 @@ GlassSurface {
                                 title: "Notification center"
                                 detail: NotificationService.count + " saved"
                             }
-                            ToggleSwitch {
-                                accessibleName: "Do Not Disturb"
-                                checked: ShellSettings.doNotDisturb
-                                onToggled: checked => ShellSettings.doNotDisturb = checked
+                            RowLayout {
+                                spacing: Theme.space8
+
+                                AppText {
+                                    text: ShellSettings.doNotDisturb
+                                        ? "Notifications muted" : "Mute notifications"
+                                    color: ShellSettings.doNotDisturb
+                                        ? Theme.accent : Theme.onSurfaceMuted
+                                    font.pixelSize: Theme.fontSmall
+                                    font.weight: Font.DemiBold
+                                }
+
+                                ToggleSwitch {
+                                    accessibleName: "Mute notifications"
+                                    checked: ShellSettings.doNotDisturb
+                                    onToggled: checked => ShellSettings.doNotDisturb = checked
+                                }
                             }
                             ActionPill {
                                 label: "Clear"

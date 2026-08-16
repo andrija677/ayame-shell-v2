@@ -10,13 +10,21 @@ GlassSurface {
 
     property var hostWindow: null
     property int currentPage: 0
+    property string titleTeaseText: ""
 
     signal closeRequested()
     signal settingsRequested()
     signal powerRequested()
 
     function showPage(page) {
+        titleTeaseText = "";
+        titleTeaseTimer.stop();
         currentPage = page;
+    }
+
+    function showTitleTease(message) {
+        titleTeaseText = message;
+        titleTeaseTimer.restart();
     }
 
     radius: Theme.radiusXLarge
@@ -25,7 +33,16 @@ GlassSurface {
     onEnabledChanged: {
         if (enabled) {
             currentPage = 0;
+        } else {
+            titleTeaseText = "";
+            titleTeaseTimer.stop();
         }
+    }
+
+    Timer {
+        id: titleTeaseTimer
+        interval: 4000
+        onTriggered: root.titleTeaseText = ""
     }
 
     ColumnLayout {
@@ -109,10 +126,55 @@ GlassSurface {
 
             KeybindsPage {
                 onBackRequested: root.showPage(0)
+                onTitleTeased: message => root.showTitleTease(message)
             }
 
         }
 
+    }
+
+    GlassSurface {
+        anchors {
+            horizontalCenter: parent.horizontalCenter
+            top: parent.top
+            topMargin: Theme.space16
+        }
+        width: Math.min(parent.width - Theme.space32,
+            titleTeaseLabel.implicitWidth + Theme.space32)
+        implicitHeight: titleTeaseLabel.implicitHeight + Theme.space16
+        radius: Theme.radiusPill
+        active: true
+        z: 50
+        visible: opacity > 0
+        opacity: root.titleTeaseText.length > 0 ? 1 : 0
+        scale: root.titleTeaseText.length > 0 ? 1 : 0.88
+
+        Behavior on opacity {
+            NumberAnimation { duration: Theme.motionResponsive }
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Theme.motionResponsive
+                easing.type: Theme.easeEnter
+            }
+        }
+
+        AppText {
+            id: titleTeaseLabel
+            anchors {
+                fill: parent
+                leftMargin: Theme.space16
+                rightMargin: Theme.space16
+            }
+            text: root.titleTeaseText
+            color: Theme.onAccentSoft
+            font.pixelSize: Theme.fontSmall
+            font.weight: Font.Bold
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
+        }
     }
 
 }

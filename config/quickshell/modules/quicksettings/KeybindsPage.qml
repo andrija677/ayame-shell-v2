@@ -7,10 +7,10 @@ Flickable {
     id: root
 
     signal backRequested()
+    signal titleTeased(string message)
 
     property int titleClicks: 0
     property int titleTeaseStage: 0
-    property string titleTeaseText: ""
 
     readonly property var titleTeases: [
         "Nyaah, stop clicking me!",
@@ -64,16 +64,14 @@ Flickable {
             return;
 
         titleClicks = 0;
-        titleTeaseText = titleTeases[Math.min(titleTeaseStage, titleTeases.length - 1)];
+        const message = titleTeases[Math.min(titleTeaseStage, titleTeases.length - 1)];
         titleTeaseStage = Math.min(titleTeaseStage + 1, titleTeases.length - 1);
-        titleTeaseTimer.restart();
+        titleTeased(message);
     }
 
     function resetTitleTease() {
         titleClicks = 0;
         titleTeaseStage = 0;
-        titleTeaseText = "";
-        titleTeaseTimer.stop();
     }
 
     contentWidth: width
@@ -82,12 +80,6 @@ Flickable {
     boundsBehavior: Flickable.StopAtBounds
 
     onVisibleChanged: if (!visible) resetTitleTease()
-
-    Timer {
-        id: titleTeaseTimer
-        interval: 4000
-        onTriggered: root.titleTeaseText = ""
-    }
 
     ColumnLayout {
         id: content
@@ -103,71 +95,39 @@ Flickable {
                 onActivated: root.backRequested()
             }
 
-            ColumnLayout {
+            Item {
                 Layout.fillWidth: true
-                spacing: 0
+                implicitHeight: titleContent.implicitHeight
 
-                AppText {
-                    Layout.fillWidth: true
-                    text: "Keybinds"
-                    font.pixelSize: Theme.fontTitle
-                    font.weight: Font.Bold
+                ColumnLayout {
+                    id: titleContent
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        verticalCenter: parent.verticalCenter
+                    }
+                    spacing: 0
 
-                    MouseArea {
-                        anchors {
-                            fill: parent
-                            margins: -Theme.space4
-                        }
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.teaseTitle()
+                    AppText {
+                        Layout.fillWidth: true
+                        text: "Keybinds"
+                        font.pixelSize: Theme.fontTitle
+                        font.weight: Font.Bold
+                    }
+
+                    AppText {
+                        text: "Ayame and Hyprland shortcuts"
+                        color: Theme.onSurfaceMuted
+                        font.pixelSize: Theme.fontSmall
                     }
                 }
 
-                AppText {
-                    text: "Ayame and Hyprland shortcuts"
-                    color: Theme.onSurfaceMuted
-                    font.pixelSize: Theme.fontSmall
+                HoverHandler { cursorShape: Qt.PointingHandCursor }
+
+                TapHandler {
+                    acceptedButtons: Qt.LeftButton
+                    onTapped: root.teaseTitle()
                 }
-            }
-        }
-
-        GlassSurface {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.maximumWidth: root.width - Theme.space24
-            implicitWidth: Math.min(root.width - Theme.space24,
-                titleTeaseLabel.implicitWidth + Theme.space32)
-            implicitHeight: titleTeaseLabel.implicitHeight + Theme.space16
-            radius: Theme.radiusPill
-            active: true
-            visible: opacity > 0
-            opacity: root.titleTeaseText.length > 0 ? 1 : 0
-            scale: root.titleTeaseText.length > 0 ? 1 : 0.88
-
-            Behavior on opacity {
-                NumberAnimation { duration: Theme.motionResponsive }
-            }
-
-            Behavior on scale {
-                NumberAnimation {
-                    duration: Theme.motionResponsive
-                    easing.type: Theme.easeEnter
-                }
-            }
-
-            AppText {
-                id: titleTeaseLabel
-                anchors {
-                    fill: parent
-                    leftMargin: Theme.space16
-                    rightMargin: Theme.space16
-                }
-                text: root.titleTeaseText
-                color: Theme.onAccentSoft
-                font.pixelSize: Theme.fontSmall
-                font.weight: Font.Bold
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                elide: Text.ElideRight
             }
         }
 
