@@ -61,8 +61,5 @@ Flickable {
             ActionPill{Layout.fillWidth:true;label:"Displays";symbol:"▤";enabled:ControlService.displaysAvailable;onActivated:root.displaysRequested()}
             ActionPill{Layout.fillWidth:true;label:"Power";symbol:"⏻";onActivated:root.powerRequested()}
         }
-        RowLayout{Layout.fillWidth:true;SectionTitle{Layout.fillWidth:true;title:"Notifications";detail:ShellSettings.doNotDisturb?"Paused":NotificationService.count+" saved"}ActionPill{visible:NotificationService.count>0;label:"Clear";onActivated:NotificationService.clearAll()}}
-        AppText{Layout.fillWidth:true;Layout.preferredHeight:90;visible:NotificationService.count===0;text:ShellSettings.doNotDisturb?"Peace and quiet":"You’re all caught up";color:Theme.onSurfaceMuted;horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter}
-        Repeater{model:NotificationService.history.slice().reverse().slice(0,6);GlassSurface{id:notice;required property var modelData;Layout.fillWidth:true;implicitHeight:68;radius:Theme.radiusLarge;depth:1;RowLayout{anchors{fill:parent;margins:Theme.space12}AppIcon{icon:"notifications";backgroundColor:Theme.accentSoft;iconColor:Theme.onAccentSoft;implicitWidth:38;implicitHeight:38}ColumnLayout{Layout.fillWidth:true;spacing:1;AppText{Layout.fillWidth:true;text:notice.modelData.summary||notice.modelData.appName||"Notification";font.weight:Font.Bold;elide:Text.ElideRight}AppText{Layout.fillWidth:true;text:NotificationService.displayBody(notice.modelData);color:Theme.onSurfaceMuted;font.pixelSize:Theme.fontSmall;elide:Text.ElideRight}}IconButton{icon:"close";accessibleName:"Dismiss notification";onActivated:NotificationService.dismiss(notice.modelData.id)}}}}
     }
 }

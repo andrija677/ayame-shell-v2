@@ -27,11 +27,11 @@ GlassSurface {
 
     RowLayout {
         z: 1
-        spacing: Theme.space12
+        spacing: Theme.space8
 
         anchors {
             fill: parent
-            margins: Theme.space16
+            margins: Theme.space12
         }
 
         AppIcon {
@@ -42,15 +42,20 @@ GlassSurface {
             implicitWidth: 38
             implicitHeight: 38
             iconSize: 21
+            Layout.minimumWidth: implicitWidth
+            Layout.maximumWidth: implicitWidth
         }
 
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             spacing: 2
 
             AppText {
+                Layout.fillWidth: true
                 text: root.title
                 font.weight: Font.Bold
+                elide: Text.ElideRight
             }
 
             AppText {
@@ -64,6 +69,9 @@ GlassSurface {
         }
 
         ToggleSwitch {
+            Layout.minimumWidth: implicitWidth
+            Layout.maximumWidth: implicitWidth
+            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
             accessibleName: root.title
             checked: root.checked
             enabled: root.available
