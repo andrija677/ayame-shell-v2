@@ -54,6 +54,7 @@ QtObject {
     property int keyboardBrightness: 0
     property var displays: []
     property bool ready: false
+    property bool persistentControlsRestored: false
     property string lastError: ""
 
     function refresh() {
@@ -96,10 +97,20 @@ QtObject {
         if (!nightLightAvailable || nightLightBusy)
             return;
         nightLightBusy = true;
-        nightLightProcess.command = ["bash", controlScript, "nightlight",
-            ShellSettings.nightLightEnabled ? "on" : "off",
+        nightLightProcess.command = [controlScript, "nightlight",
+            ShellSettings.nightLightEnabled ? 1 : 0,
             String(ShellSettings.nightLightTemperature)];
         nightLightProcess.running = true;
+    }
+
+    function restorePersistentControls() {
+        if (persistentControlsRestored || !ready || !ShellSettings.ready)
+            return;
+        persistentControlsRestored = true;
+        if (nightLightAvailable && ShellSettings.nightLightEnabled)
+            applyNightLight();
+        if (idleAvailable && ShellSettings.idleEnabled)
+            applyIdle();
     }
 
     function toggleDoNotDisturb() {
@@ -160,13 +171,9 @@ QtObject {
                     }
                 }
                 root.ready = true;
-                if (Quickshell.env("AYAME_V2_RUNTIME") === "1"
-                        && root.nightLightAvailable && ShellSettings.nightLightEnabled)
-                    root.applyNightLight();
-                if (Quickshell.env("AYAME_V2_RUNTIME") === "1"
-                        && root.idleAvailable && ShellSettings.idleEnabled)
-                    root.applyIdle();
                 root.refreshDisplays();
+                if (Quickshell.env("AYAME_V2_RUNTIME") === "1")
+                    root.restorePersistentControls();
             }
         }
     }
@@ -220,6 +227,14 @@ QtObject {
         function onIdleEnabledChanged() { root.applyIdle(); }
         function onIdleTimeoutSecondsChanged() { if (ShellSettings.idleEnabled) root.applyIdle(); }
         function onIdleLockEnabledChanged() { if (ShellSettings.idleEnabled) root.applyIdle(); }
+    }
+
+    property Connections settingsReadyConnection: Connections {
+        target: ShellSettings
+        function onReadyChanged() {
+            if (Quickshell.env("AYAME_V2_RUNTIME") === "1")
+                root.restorePersistentControls();
+        }
     }
 
     property Timer refreshTimer: Timer {

@@ -7,6 +7,8 @@ import Quickshell.Io
 QtObject {
     id: root
 
+    property bool ready: false
+
     property alias appearanceMode: values.appearanceMode
     property alias dynamicColorsEnabled: values.dynamicColorsEnabled
     property alias dynamicColorStyle: values.dynamicColorStyle
@@ -91,6 +93,7 @@ QtObject {
         watchChanges: true
         atomicWrites: true
         printErrors: false
+        onLoaded: root.ready = true
         onAdapterUpdated: root.save()
 
         JsonAdapter {

@@ -47,17 +47,20 @@ case "${1:-status}" in
         esac
         ;;
     nightlight)
-        mode="${2:-off}"
+        enabled="${2:?missing enabled state}"
         temperature="${3:-4500}"
         [[ "$temperature" =~ ^[0-9]+$ ]] || exit 2
+        [[ "$enabled" == 0 || "$enabled" == 1 ]] || exit 2
+        # V1 and V2 intentionally share the canonical service. This prevents
+        # two hyprsunset processes fighting over the compositor after a shell
+        # hand-off and makes either shell's Off toggle authoritative.
         systemctl --user stop ayame-v2-night-light.service >/dev/null 2>&1 || true
-        if [[ "$mode" == "on" ]]; then
+        systemctl --user stop ayame-night-light.service >/dev/null 2>&1 || true
+        if [[ "$enabled" == 1 ]]; then
             command -v hyprsunset >/dev/null 2>&1
-            systemd-run --user --unit=ayame-v2-night-light.service \
+            systemd-run --user --unit=ayame-night-light.service \
                 --property=Restart=on-failure --collect \
                 hyprsunset -t "$temperature" >/dev/null
-        elif [[ "$mode" != "off" ]]; then
-            exit 2
         fi
         ;;
     brightness)
@@ -138,7 +141,7 @@ case "${1:-status}" in
         printf 'saved\n'
         ;;
     *)
-        printf 'Usage: %s {status|network on|off|nightlight on|off [K]}\n' "$0" >&2
+        printf 'Usage: %s {status|network on|off|nightlight 0|1 [K]}\n' "$0" >&2
         exit 2
         ;;
 esac
