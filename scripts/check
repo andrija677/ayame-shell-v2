@@ -4,13 +4,15 @@ set -euo pipefail
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
 bash -n "$project_dir/scripts/ayame-v2-preview" "$project_dir/scripts/check" \
+    "$project_dir/install.sh" "$project_dir/uninstall.sh" \
     "$project_dir/scripts/ayame-v2-runtime" "$project_dir/scripts/ayame-v2-session" \
     "$project_dir/scripts/ayame-add-app" "$project_dir/scripts/ayame-screenshot" \
     "$project_dir/scripts/ayame-v2-controls" "$project_dir/scripts/ayame-wallpaper" \
     "$project_dir/scripts/ayame-record" "$project_dir/scripts/ayame-doctor" \
     "$project_dir/scripts/ayame-clipboard" "$project_dir/scripts/ayame-gaming-mode" \
     "$project_dir/scripts/ayame-appearance-mode" "$project_dir/scripts/ayame-v2-ipc" \
-    "$project_dir/scripts/ayame-v2-keybinds" "$project_dir/scripts/ayame-kitty-colors"
+    "$project_dir/scripts/ayame-v2-keybinds" "$project_dir/scripts/ayame-kitty-colors" \
+    "$project_dir/scripts/ayame-v2-migrate" "$project_dir/scripts/ayame-v2-update"
 python3 -m py_compile "$project_dir/scripts/ayame-ai.py"
 
 qt6_tools="/usr/lib/qt6/bin"

@@ -16,7 +16,7 @@ QtObject {
     historyFile: FileView {
         id: historyFile
 
-        path: Quickshell.dataDir + "/notification-history.json"
+        path: StoragePaths.dataDir + "/notification-history.json"
         preload: true
         atomicWrites: true
         printErrors: false

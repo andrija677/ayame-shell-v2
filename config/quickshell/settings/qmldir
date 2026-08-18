@@ -1,1 +1,2 @@
 singleton ShellSettings 1.0 ShellSettings.qml
+singleton StoragePaths 1.0 StoragePaths.qml

@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target_dir="${XDG_DATA_HOME:-$HOME/.local/share}/ayame-shell-v2/data"
+source_file=""
+force=false
+
+for argument in "$@"; do
+    case "$argument" in
+        --target=*) target_dir="${argument#*=}" ;;
+        --source=*) source_file="${argument#*=}" ;;
+        --force) force=true ;;
+        *) printf 'Unknown option: %s\n' "$argument" >&2; exit 2 ;;
+    esac
+done
+
+command -v jq >/dev/null 2>&1 || {
+    printf 'jq is required to migrate Ayame settings.\n' >&2
+    exit 1
+}
+
+latest_matching() {
+    local filter="$1" candidate newest="" newest_time=0 modified
+    local data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
+    shopt -s nullglob
+    for candidate in \
+            "$data_home"/noctalia-qs/by-shell/*/settings.json \
+            "$data_home"/quickshell/by-shell/*/settings.json; do
+        jq -e "$filter" "$candidate" >/dev/null 2>&1 || continue
+        modified="$(stat -c %Y "$candidate" 2>/dev/null || printf 0)"
+        if ((modified > newest_time)); then
+            newest="$candidate"
+            newest_time="$modified"
+        fi
+    done
+    shopt -u nullglob
+    printf '%s\n' "$newest"
+}
+
+if [[ -z "$source_file" ]]; then
+    # Prefer an existing V2 checkout so installing the daily-driver build keeps
+    # the exact configuration the user already tested. Fall back to V1.
+    source_file="$(latest_matching 'has("appearanceMode") and has("glassOpacity")')"
+    if [[ -z "$source_file" ]]; then
+        source_file="$(latest_matching 'has("colorScheme") and has("dynamicColorWallpaper")')"
+    fi
+fi
+
+[[ -f "$source_file" ]] || {
+    printf 'No Ayame settings were found to migrate.\n'
+    exit 0
+}
+
+mkdir -p "$target_dir"
+target_file="$target_dir/settings.json"
+if [[ -f "$target_file" && "$force" != true ]]; then
+    printf 'Keeping existing V2 settings: %s\n' "$target_file"
+    exit 0
+fi
+
+if [[ -f "$target_file" ]]; then
+    cp -a -- "$target_file" \
+        "$target_file.backup-$(date +%Y%m%d-%H%M%S)"
+fi
+
+temporary="$(mktemp --tmpdir="$target_dir" .settings.XXXXXX)"
+trap 'rm -f -- "$temporary"' EXIT
+
+if jq -e 'has("appearanceMode") and has("glassOpacity")' \
+        "$source_file" >/dev/null 2>&1; then
+    jq . "$source_file" > "$temporary"
+    migration_kind="Ayame V2 checkout"
+else
+    jq 'def setting($name; $default):
+            if has($name) then .[$name] else $default end;
+    {
+        appearanceMode: (if (.dynamicColorMode // "") == "automatic"
+            then "automatic" else (.colorScheme // "automatic") end),
+        dynamicColorsEnabled: setting("dynamicColorsEnabled"; true),
+        dynamicColorStyle: (.dynamicColorStyle // "tonal"),
+        wallpaperPath: (.dynamicColorWallpaper // ""),
+        glassBlur: setting("blurEnabled"; true),
+        surfaceTint: (if setting("wallpaperTintEnabled"; true) then 0.18 else 0 end),
+        motionEnabled: setting("animationsEnabled"; true),
+        dockAutoHide: setting("dockAutoHide"; true),
+        barEnabled: setting("barEnabled"; true),
+        barStyle: (.barStyle // "floating"),
+        dockEnabled: setting("dockEnabled"; true),
+        pinnedDockApps: (if (.pinnedDockApps // "") != "" then .pinnedDockApps else (.dockAppOrder // "") end),
+        dockAppOrder: (.dockAppOrder // ""),
+        workspacesEnabled: setting("workspacesEnabled"; true),
+        activeWindowEnabled: setting("activeWindowEnabled"; true),
+        clockEnabled: setting("clockEnabled"; true),
+        clockFormat: (.clockFormat // "24h"),
+        dashboardEnabled: setting("dashboardEnabled"; true),
+        quickSettingsEnabled: setting("quickSettingsEnabled"; true),
+        audioEnabled: setting("audioEnabled"; true),
+        networkEnabled: setting("networkEnabled"; true),
+        batteryEnabled: setting("batteryEnabled"; true),
+        trayEnabled: setting("trayEnabled"; true),
+        showPassiveTrayItems: setting("showPassiveTrayItems"; true),
+        densityMode: (if (.densityMode // "normal") == "normal" then "comfortable" else .densityMode end),
+        workspaceCount: (.workspaceCount // 5),
+        doNotDisturb: (.doNotDisturb // false),
+        notificationServerEnabled: setting("notificationServerEnabled"; true),
+        clipboardHistoryEnabled: (.clipboardHistoryEnabled // false),
+        weatherEnabled: (.weatherEnabled // false),
+        weatherLocationName: (.weatherLocationName // ""),
+        weatherLatitude: (.weatherLatitude // 0),
+        weatherLongitude: (.weatherLongitude // 0),
+        weatherTemperatureUnit: (.weatherTemperatureUnit // "celsius"),
+        nightLightEnabled: (.nightLightEnabled // false),
+        nightLightTemperature: (.nightLightTemperature // 4500),
+        idleEnabled: (.idleEnabled // false),
+        idleTimeoutSeconds: (.idleTimeoutSeconds // 600),
+        idleLockEnabled: setting("idleLockEnabled"; true),
+        aiEnabled: setting("aiEnabled"; true),
+        aiProvider: (.aiProvider // "gemini"),
+        aiModel: (.aiModel // "gemini-2.5-flash"),
+        aiBaseUrl: (.aiBaseUrl // ""),
+        aiPersonality: (if (.aiPersonality // "assistant") == "assistant" then "calm" else .aiPersonality end),
+        aiCustomPrompt: (.aiCustomPrompt // "")
+    }' "$source_file" > "$temporary"
+    migration_kind="Ayame V1"
+fi
+
+chmod 0600 "$temporary"
+mv -f -- "$temporary" "$target_file"
+trap - EXIT
+
+source_dir="$(dirname -- "$source_file")"
+for name in events.json notification-history.json ai-chat-history.json; do
+    if [[ -f "$source_dir/$name" && ! -f "$target_dir/$name" ]]; then
+        install -m 0600 "$source_dir/$name" "$target_dir/$name"
+    fi
+done
+
+v1_wallpaper="${XDG_STATE_HOME:-$HOME/.local/state}/ayame-shell/wallpaper.path"
+v2_state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/ayame-shell-v2"
+if [[ -f "$v1_wallpaper" && ! -f "$v2_state_dir/wallpaper.path" ]]; then
+    mkdir -p "$v2_state_dir"
+    install -m 0600 "$v1_wallpaper" "$v2_state_dir/wallpaper.path"
+fi
+
+printf 'Migrated %s settings from %s\n' "$migration_kind" "$source_file"

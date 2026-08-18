@@ -120,7 +120,7 @@ GlassSurface {
 
     FileView {
         id: historyFile
-        path: Quickshell.dataDir + "/ai-chat-history.json"
+        path: StoragePaths.dataDir + "/ai-chat-history.json"
         preload: true
         atomicWrites: true
         printErrors: false

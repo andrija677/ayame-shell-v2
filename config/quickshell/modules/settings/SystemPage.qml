@@ -11,7 +11,9 @@ Flickable {
     id: root
     property var diagnostics: []
     property string diagnosticStatus: "Run a check whenever something feels off"
-    property string updateStatus: "Development build"
+    property string updateStatus: "Install the newest build from GitHub :3"
+    property string updateOutput: ""
+    property string updateFailure: ""
     contentWidth:width; contentHeight:content.implicitHeight; clip:true
     boundsBehavior:Flickable.StopAtBounds
     ColumnLayout {
@@ -38,7 +40,7 @@ Flickable {
         }
         GlassSurface {
             Layout.fillWidth:true; implicitHeight:82; radius:Theme.radiusLarge; depth:1
-            RowLayout { anchors{fill:parent;margins:Theme.space16} AppIcon{icon:"system_update";backgroundColor:Theme.accentSoft;iconColor:Theme.onAccentSoft;implicitWidth:42;implicitHeight:42} ColumnLayout{Layout.fillWidth:true;AppText{text:"Ayame Shell V2";font.weight:Font.Bold}AppText{text:root.updateStatus;color:Theme.onSurfaceMuted;font.pixelSize:Theme.fontSmall}} ActionPill{label:updateProcess.running?"Checking":"Check for updates";enabled:!updateProcess.running;onActivated:{updateProcess.command=["git","ls-remote","--exit-code","origin","refs/heads/main"];updateProcess.running=true}} }
+            RowLayout { anchors{fill:parent;margins:Theme.space16} AppIcon{icon:"system_update";backgroundColor:Theme.accentSoft;iconColor:Theme.onAccentSoft;implicitWidth:42;implicitHeight:42} ColumnLayout{Layout.fillWidth:true;AppText{text:"Ayame Updater";font.weight:Font.Bold}AppText{Layout.fillWidth:true;text:root.updateStatus;color:root.updateFailure.length>0?Theme.danger:Theme.onSurfaceMuted;font.pixelSize:Theme.fontSmall;elide:Text.ElideRight}} ActionPill{label:updateProcess.running?"Updating…":"Update";enabled:!updateProcess.running;primary:true;onActivated:{root.updateStatus="Downloading and validating the newest build…";updateProcess.running=true}} }
         }
     }
     Process {
@@ -46,5 +48,14 @@ Flickable {
         stdout:StdioCollector{onStreamFinished:{const rows=[];for(const line of text.trim().split("\n")){const f=line.split("|");if(f.length>=4)rows.push({id:f[0],label:f[1],state:f[2],detail:f.slice(3).join("|")});}root.diagnostics=rows;const failures=rows.filter(row=>row.state==="error").length;root.diagnosticStatus=failures?failures+" issue"+(failures===1?"":"s")+" need attention":"Everything essential looks healthy";}}
     }
     Process { id:actionProcess }
-    Process { id:updateProcess; onExited:(exitCode,exitStatus)=>root.updateStatus=exitCode===0?"Remote repository reachable":"Could not check for updates" }
+    Process {
+        id:updateProcess
+        command:[Quickshell.shellDir+"/../../scripts/ayame-v2-update"]
+        stdout:StdioCollector{onStreamFinished:root.updateOutput=text.trim()}
+        stderr:StdioCollector{onStreamFinished:root.updateFailure=text.trim()}
+        onStarted:{root.updateOutput="";root.updateFailure=""}
+        onExited:(exitCode,exitStatus)=>root.updateStatus=exitCode===0
+            ? root.updateOutput||"Ayame V2 is up to date :3"
+            : root.updateFailure||"Update failed • see ~/.local/state/ayame-shell-v2/update.log"
+    }
 }

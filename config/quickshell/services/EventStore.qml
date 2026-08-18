@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../settings"
 
 QtObject {
     id: root
@@ -81,7 +82,7 @@ QtObject {
 
     property FileView eventFile: FileView {
         id: eventFile
-        path: Quickshell.dataDir + "/events.json"
+        path: StoragePaths.dataDir + "/events.json"
         preload: true
         atomicWrites: true
         printErrors: false

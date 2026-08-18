@@ -3,9 +3,32 @@ set -euo pipefail
 
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/ayame-shell-v2"
 wallpaper_file="$state_dir/wallpaper.path"
+hyprpaper_config="$state_dir/hyprpaper.conf"
 mkdir -p "$state_dir"
 
+write_config() {
+    local wallpaper="${1:-}" temporary="$hyprpaper_config.tmp"
+    {
+        printf 'splash = false\nipc = true\n'
+        if [[ -n "$wallpaper" ]]; then
+            printf '\nwallpaper {\n    monitor =\n    path = %s\n    fit_mode = cover\n}\n' \
+                "$wallpaper"
+        fi
+    } > "$temporary"
+    mv -f -- "$temporary" "$hyprpaper_config"
+}
+
 case "${1:-}" in
+    start)
+        wallpaper=""
+        if [[ -r "$wallpaper_file" ]]; then
+            IFS= read -r wallpaper < "$wallpaper_file" || true
+            [[ -f "$wallpaper" ]] || wallpaper=""
+        fi
+        write_config "$wallpaper"
+        pkill -x hyprpaper >/dev/null 2>&1 || true
+        exec hyprpaper --config "$hyprpaper_config"
+        ;;
     set)
         wallpaper="${2:-}"
         [[ -f "$wallpaper" ]] || { printf 'Wallpaper does not exist: %s\n' "$wallpaper" >&2; exit 1; }
@@ -13,6 +36,7 @@ case "${1:-}" in
         [[ "$wallpaper" != *$'\n'* ]] || exit 2
         printf '%s\n' "$wallpaper" > "$wallpaper_file.tmp"
         mv -f -- "$wallpaper_file.tmp" "$wallpaper_file"
+        write_config "$wallpaper"
         if hyprctl hyprpaper wallpaper ", $wallpaper, cover" >/dev/null 2>&1; then
             :
         elif command -v swww >/dev/null 2>&1; then
@@ -22,5 +46,5 @@ case "${1:-}" in
             exit 1
         fi
         ;;
-    *) printf 'Usage: %s set PATH\n' "$0" >&2; exit 2 ;;
+    *) printf 'Usage: %s {start|set PATH}\n' "$0" >&2; exit 2 ;;
 esac

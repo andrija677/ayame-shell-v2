@@ -88,7 +88,7 @@ QtObject {
 
     property FileView settingsFile: FileView {
         id: settingsFile
-        path: Quickshell.dataDir + "/settings.json"
+        path: StoragePaths.dataDir + "/settings.json"
         preload: true
         watchChanges: true
         atomicWrites: true
