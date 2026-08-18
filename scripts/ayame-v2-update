@@ -22,7 +22,8 @@ tar -xzf "$temporary_dir/ayame-shell-v2.tar.gz" \
 update_available=false
 for payload in config docs scripts tests README.md install.sh uninstall.sh; do
     if [[ ! -e "$install_dir/$payload" ]] \
-            || ! diff -qr "$temporary_dir/source/$payload" \
+            || ! diff -qr --exclude=__pycache__ --exclude='*.py[co]' \
+                "$temporary_dir/source/$payload" \
                 "$install_dir/$payload" >/dev/null 2>&1; then
         update_available=true
         break
