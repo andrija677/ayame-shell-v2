@@ -302,15 +302,20 @@ else
 fi
 printf '\n-- Ayame Shell V2\ndofile("%s")\n' "$hypr_fragment" \
     >> "$temporary_hypr"
-install -m 0644 "$temporary_hypr" "$hypr_main"
-rm -f -- "$temporary_hypr"
+chmod 0644 "$temporary_hypr"
+# Hyprland watches its main configuration file. Replace it atomically so the
+# watcher can never observe a short unlink/create gap during installs or updates.
+mv -f -- "$temporary_hypr" "$hypr_main"
 
 verification_log="$(mktemp)"
 if ! Hyprland --verify-config --config "$hypr_main" \
         > "$verification_log" 2>&1; then
     cat "$verification_log" >&2
     if [[ -f "$rollback_dir/hyprland.lua" ]]; then
-        install -m 0644 "$rollback_dir/hyprland.lua" "$hypr_main"
+        restore_hypr="$(mktemp --tmpdir="$hypr_dir" .hyprland-restore.XXXXXX)"
+        cp -- "$rollback_dir/hyprland.lua" "$restore_hypr"
+        chmod 0644 "$restore_hypr"
+        mv -f -- "$restore_hypr" "$hypr_main"
     fi
     rm -f -- "$verification_log"
     printf 'Hyprland rejected the V2 configuration; the previous file was restored.\n' >&2
