@@ -126,6 +126,10 @@ GlassSurface {
                     font.pixelSize: Theme.fontBody
                     clip: true
                     onTextChanged: root.query = text
+                    onAccepted: {
+                        if (root.query.trim().length > 0 && root.apps.length === 1)
+                            root.appRequested(root.apps[0]);
+                    }
                     Keys.onEscapePressed: root.closeRequested()
 
                     AppText {
