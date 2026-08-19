@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 
 Scope {
@@ -32,6 +33,17 @@ Scope {
         function settings(): void { controller.activeOverlay = "settings"; }
         function close(): void { controller.closeOverlay(); }
         function capture(): void { controller.requestAreaCapture(); }
+    }
+
+    // Hyprland does not continuously publish window geometry while a window is
+    // being moved. Refresh it while intelligent hiding is enabled so the dock
+    // reacts as soon as a window crosses its bounds.
+    Timer {
+        interval: 120
+        repeat: true
+        running: ShellSettings.dockEnabled && ShellSettings.dockAutoHide
+        triggeredOnStart: true
+        onTriggered: Hyprland.refreshToplevels()
     }
 
     Variants {

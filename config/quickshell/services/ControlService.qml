@@ -81,6 +81,19 @@ QtObject {
             audio.volume = Math.max(0, Math.min(1, value));
     }
 
+    function adjustVolume(direction) {
+        if (!audio || direction === 0)
+            return;
+        const percent = Math.round(audio.volume * 100);
+        const next = direction > 0
+            ? Math.floor(percent / 5) * 5 + 5
+            : Math.ceil(percent / 5) * 5 - 5;
+        const clamped = Math.max(0, Math.min(100, next));
+        audio.volume = clamped / 100;
+        if (audio.muted && clamped > 0)
+            audio.muted = false;
+    }
+
     function toggleMute() {
         if (audio)
             audio.muted = !audio.muted;

@@ -21,6 +21,8 @@ Item {
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var audio: sink?.audio ?? null
     property bool volumeFeedbackVisible: false
+    property real volumeWheelAccumulator: 0
+    property bool volumeWheelUsesAngleDelta: true
     readonly property bool batteryAvailable: battery?.isPresent
         && battery?.isLaptopBattery
     readonly property int batteryPercent: Math.round(
@@ -164,11 +166,14 @@ Item {
                 iconColor: Theme.onSurfaceMuted
             }
             Rectangle {
+                id: volumeControl
                 visible: ShellSettings.audioEnabled
-                implicitWidth: root.volumeFeedbackVisible ? 74 : 30
+                readonly property bool detailsVisible: volumePointer.containsMouse
+                    || root.volumeFeedbackVisible
+                implicitWidth: detailsVisible ? 78 : 30
                 implicitHeight: 30
                 radius: Theme.radiusPill
-                color: volumePointer.containsMouse || root.volumeFeedbackVisible
+                color: detailsVisible
                     ? Theme.glassHighest : "transparent"
 
                 RowLayout {
@@ -187,7 +192,7 @@ Item {
                             ? Theme.danger : Theme.onSurfaceMuted
                     }
                     AppText {
-                        visible: root.volumeFeedbackVisible
+                        visible: volumeControl.detailsVisible
                         text: ControlService.muted ? "Muted"
                             : Math.round(ControlService.volume * 100) + "%"
                         color: ControlService.muted
@@ -210,9 +215,24 @@ Item {
                         root.revealVolumeFeedback();
                     }
                     onWheel: event => {
-                        const direction = event.angleDelta.y > 0 ? 1 : -1;
-                        ControlService.setVolume(ControlService.volume
-                            + direction * 0.05);
+                        const usesAngle = event.angleDelta.y !== 0;
+                        const delta = usesAngle
+                            ? event.angleDelta.y : event.pixelDelta.y;
+                        if (delta === 0) {
+                            event.accepted = false;
+                            return;
+                        }
+                        if (root.volumeWheelUsesAngleDelta !== usesAngle)
+                            root.volumeWheelAccumulator = 0;
+                        root.volumeWheelUsesAngleDelta = usesAngle;
+                        root.volumeWheelAccumulator += delta;
+                        const threshold = usesAngle ? 120 : 30;
+                        while (Math.abs(root.volumeWheelAccumulator) >= threshold) {
+                            const direction = root.volumeWheelAccumulator > 0 ? 1 : -1;
+                            ControlService.adjustVolume(direction);
+                            root.volumeWheelAccumulator -= direction * threshold;
+                        }
+                        volumeWheelReset.restart();
                         root.revealVolumeFeedback();
                         event.accepted = true;
                     }
@@ -298,6 +318,12 @@ Item {
         id: volumeFeedbackTimer
         interval: 2500
         onTriggered: root.volumeFeedbackVisible = false
+    }
+
+    Timer {
+        id: volumeWheelReset
+        interval: 220
+        onTriggered: root.volumeWheelAccumulator = 0
     }
 
     function revealVolumeFeedback() {
